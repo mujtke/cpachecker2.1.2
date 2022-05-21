@@ -18,6 +18,7 @@ import com.google.errorprone.annotations.Immutable;
 import java.io.Serializable;
 import java.util.List;
 import java.util.Objects;
+import java.util.OptionalLong;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.sosy_lab.cpachecker.cfa.ast.ASimpleDeclaration;
 

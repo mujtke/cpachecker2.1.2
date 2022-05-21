@@ -37,6 +37,8 @@ import org.sosy_lab.cpachecker.core.waitlist.Waitlist;
 import org.sosy_lab.cpachecker.core.waitlist.Waitlist.WaitlistFactory;
 import org.sosy_lab.cpachecker.core.waitlist.WeightedRandomWaitlist;
 import org.sosy_lab.cpachecker.cpa.automaton.AutomatonVariableWaitlist;
+import org.sosy_lab.cpachecker.cpa.racer.RacerUsageReachedSet;
+import org.sosy_lab.cpachecker.cpa.racer.storage.RacerUsageConfiguration;
 import org.sosy_lab.cpachecker.cpa.usage.UsageReachedSet;
 import org.sosy_lab.cpachecker.cpa.usage.storage.UsageConfiguration;
 
@@ -48,7 +50,8 @@ public class ReachedSetFactory {
     LOCATIONMAPPED,
     PARTITIONED,
     PSEUDOPARTITIONED,
-    USAGE
+    USAGE,
+    RACER
   }
 
   @Option(
@@ -180,6 +183,7 @@ public class ReachedSetFactory {
 
   private @Nullable BlockConfiguration blockConfig;
   private @Nullable UsageConfiguration usageConfig;
+  private @Nullable RacerUsageConfiguration racerConfig;
   private WeightedRandomWaitlist.@Nullable WaitlistOptions weightedWaitlistOptions;
   private final LogManager logger;
 
@@ -195,6 +199,11 @@ public class ReachedSetFactory {
     }
     if (reachedSet == ReachedSetType.USAGE) {
       usageConfig = new UsageConfiguration(pConfig);
+    } else {
+      usageConfig = null;
+    }
+    if (reachedSet == ReachedSetType.RACER) {
+      racerConfig = new RacerUsageConfiguration(pConfig);
     } else {
       usageConfig = null;
     }
@@ -278,6 +287,9 @@ public class ReachedSetFactory {
         break;
       case USAGE:
         reached = new UsageReachedSet(cpa, waitlistFactory, usageConfig, logger);
+        break;
+      case RACER:
+        reached = new RacerUsageReachedSet(cpa, waitlistFactory, racerConfig, logger);
         break;
       case NORMAL:
       default:

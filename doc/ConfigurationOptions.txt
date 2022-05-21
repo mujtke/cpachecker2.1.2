@@ -177,6 +177,9 @@ algorithm.parallelBam.numberOfThreads = -1
 # export number of running RSE instances as CSV
 algorithm.parallelBam.runningRSESeriesFile = "RSESeries.csv"
 
+# substitute of CPAAlgorithm for Racer
+analysis.RacerAlgorithm = false
+
 # use a BMC like algorithm that checks for satisfiability after the analysis
 # has finished, works only with PredicateCPA
 analysis.algorithm.BMC = false
@@ -201,6 +204,9 @@ analysis.algorithm.MPI = false
 
 # use MPV algorithm for checking multiple properties
 analysis.algorithm.MPV = false
+
+# use Plan_C algorithm for data race.
+analysis.algorithm.Racer.Plan_C = false
 
 # use a analysis which proves if the program satisfies a specified property
 # with the help of an enabler CPA to separate differnt program paths
@@ -364,7 +370,7 @@ analysis.programNames = []
 # states' lattice (maybe faster for some special analyses which use merge_sep
 # and stop_sep
 analysis.reachedSet = PARTITIONED
-  enum:     [NORMAL, LOCATIONMAPPED, PARTITIONED, PSEUDOPARTITIONED, USAGE]
+  enum:     [NORMAL, LOCATIONMAPPED, PARTITIONED, PSEUDOPARTITIONED, USAGE, RACER]
 
 # track more statistics about the reachedset
 analysis.reachedSet.withStatistics = false
@@ -1148,6 +1154,31 @@ coverage.file = "coverage.info"
 
 # CPA to use (see doc/Configuration.md for more documentation on this)
 cpa = CompositeCPA.class.getCanonicalName()
+
+# allow assignments of a new thread to the same left-hand-side as an existing
+# thread.
+cpa.ThreadingForPlanC.allowMultipleLHS = false
+
+# the maximal number of parallel threads, -1 for infinite. When combined with
+# 'useClonedFunctions=true', we need at least N cloned functions. The option
+# 'cfa.cfaCloner.numberOfCopies' should be set to N.
+cpa.ThreadingForPlanC.maxNumberOfThreads = 5
+
+# in case of witness validation we need to check all possible function calls
+# of cloned CFAs.
+cpa.ThreadingForPlanC.useAllPossibleClones = false
+
+# atomic locks are used to simulate atomic statements, as described in the
+# rules of SV-Comp.
+cpa.ThreadingForPlanC.useAtomicLocks = true
+
+# do not use the original functions from the CFA, but cloned ones. See
+# cfa.postprocessing.CFACloner for detail.
+cpa.ThreadingForPlanC.useClonedFunctions = true
+
+# local access locks are used to avoid expensive interleaving, if a thread
+# only reads and writes its own variables.
+cpa.ThreadingForPlanC.useLocalAccessLocks = true
 
 # Where to perform abstraction
 cpa.abe.abstractionLocations = LOOPHEAD
@@ -2679,6 +2710,31 @@ cpa.propertychecker.className = org.sosy_lab.cpachecker.pcc.propertychecker.Defa
 # respective constructor. Every parameter value is finished with ",". The
 # empty string represents an empty parameter list.
 cpa.propertychecker.parameters = ""
+
+# functions, which stops analysis
+cpa.racer.abortfunctions = {}
+
+# bind arguments of functions with passed variables
+cpa.racer.bindArgsFunctions = false
+
+# functions, which are used to bind variables (like list elements are binded
+# to list variable)
+cpa.racer.binderFunctions = {}
+
+# do not use initial variable in analysis if found an alias for it
+cpa.racer.filterAliases = true
+
+# A path to precision
+cpa.racer.precision.path = "localsave"
+
+# functions, which we don't analize
+cpa.racer.skippedfunctions = {}
+
+# use sound regions as identifiers
+cpa.racer.useSoundRegions = false
+
+# functions, which are marked as write access
+cpa.racer.writeAccessFunctions = {}
 
 # Whether to consider constraints on program variables (e.g., x > 10) as
 # definitions)

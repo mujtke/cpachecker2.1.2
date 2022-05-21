@@ -17,6 +17,9 @@ import java.util.Set;
 import org.sosy_lab.cpachecker.cfa.ast.ASimpleDeclaration;
 import org.sosy_lab.cpachecker.cfa.model.CFANode;
 import org.sosy_lab.cpachecker.cfa.model.FunctionExitNode;
+import org.sosy_lab.cpachecker.cpa.lock.LockIdentifier;
+import org.sosy_lab.cpachecker.util.states.MemoryLocation;
+import org.sosy_lab.cpachecker.util.states.RCUMemoryLocation;
 
 /** Represents a block as described in the BAM paper. */
 public class Block {
@@ -29,6 +32,26 @@ public class Block {
   private final ImmutableSet<CFANode> returnNodes;
   private final ImmutableSet<CFANode> nodes;
 
+  // TODO these may be not used
+  private final Set<RCUMemoryLocation> memoryLocations;
+  private final ImmutableSet<LockIdentifier> capturedLocks;
+  // TODO this may be not workable
+  public Block(
+      Iterable<ReferencedVariable> pReferencedVariables,
+      Set<CFANode> pCallNodes,
+      Set<CFANode> pReturnNodes,
+      Iterable<CFANode> allNodes,
+      Iterable<LockIdentifier> locks,
+      Iterable<RCUMemoryLocation> pMemoryLocations) {
+
+    referencedVariables = ImmutableSet.copyOf(pReferencedVariables);
+    callNodes = ImmutableSortedSet.copyOf(pCallNodes);
+    returnNodes = ImmutableSortedSet.copyOf(pReturnNodes);
+    nodes = ImmutableSortedSet.copyOf(allNodes);
+    capturedLocks = ImmutableSortedSet.copyOf(locks);
+    memoryLocations = ImmutableSortedSet.copyOf(pMemoryLocations);
+  }
+
   public Block(
       Iterable<ReferencedVariable> pReferencedVariables,
       Set<CFANode> pCallNodes,
@@ -39,6 +62,10 @@ public class Block {
     callNodes = ImmutableSortedSet.copyOf(pCallNodes);
     returnNodes = ImmutableSortedSet.copyOf(pReturnNodes);
     nodes = ImmutableSortedSet.copyOf(allNodes);
+
+    // TODO these are added because newly added memoryLocations and capturedLocks
+    memoryLocations = null;
+    capturedLocks = null;
   }
 
   public Set<CFANode> getCallNodes() {
@@ -158,5 +185,9 @@ public class Block {
   @Override
   public int hashCode() {
     return nodes.hashCode();
+  }
+
+  public Set<RCUMemoryLocation> getMemoryLocations() {
+    return memoryLocations;
   }
 }

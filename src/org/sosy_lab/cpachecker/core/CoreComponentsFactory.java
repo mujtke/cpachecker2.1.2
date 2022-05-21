@@ -38,6 +38,9 @@ import org.sosy_lab.cpachecker.core.algorithm.MPIPortfolioAlgorithm;
 import org.sosy_lab.cpachecker.core.algorithm.NoopAlgorithm;
 import org.sosy_lab.cpachecker.core.algorithm.ParallelAlgorithm;
 import org.sosy_lab.cpachecker.core.algorithm.ProgramSplitAlgorithm;
+import org.sosy_lab.cpachecker.core.algorithm.Racer.Plan_C_Algorithm;
+import org.sosy_lab.cpachecker.core.algorithm.Racer.Plan_C_Algorithm.Plan_C_AlgorithmFactory;
+import org.sosy_lab.cpachecker.core.algorithm.RacerCPAAlgorithm;
 import org.sosy_lab.cpachecker.core.algorithm.RandomTestGeneratorAlgorithm;
 import org.sosy_lab.cpachecker.core.algorithm.RestartAlgorithm;
 import org.sosy_lab.cpachecker.core.algorithm.RestartWithConditionsAlgorithm;
@@ -116,6 +119,20 @@ public class CoreComponentsFactory {
               + "\nYou need to specify a refiner with the cegar.refiner option."
               + "\nCurrently all refiner require the use of the ARGCPA.")
   private boolean useCEGAR = false;
+
+  @Option(
+      secure = true,
+      name = "algorithm.Racer.Plan_C",
+      description = "use Plan_C algorithm for data race."
+  )
+  private boolean usePlan_C = false;
+
+  @Option(
+      secure = true,
+      name = "RacerAlgorithm",
+      description = "substitute of CPAAlgorithm for Racer"
+  )
+  private boolean useRacerAlgorithm = false;
 
   @Option(
       secure = true,
@@ -535,6 +552,20 @@ public class CoreComponentsFactory {
     } else if (useRandomTestCaseGeneratorAlgorithm) {
       algorithm =
           new RandomTestGeneratorAlgorithm(config, logger, shutdownNotifier, cfa, specification);
+    } else if (useRacerAlgorithm) {
+          // for Racer, added by yzc
+      algorithm = RacerCPAAlgorithm.create(cpa, logger, config, shutdownNotifier);
+
+      if (useCEGAR) {
+        algorithm =
+            new CEGARAlgorithmFactory(algorithm, cpa, logger, config, shutdownNotifier)
+                .newInstance();
+      }
+
+      // add by yzc
+      if (usePlan_C) {
+        algorithm = new Plan_C_AlgorithmFactory(algorithm, cpa, logger, config, shutdownNotifier).newInstance();
+      }
     } else {
       algorithm = CPAAlgorithm.create(cpa, logger, config, shutdownNotifier);
 
@@ -572,6 +603,11 @@ public class CoreComponentsFactory {
         algorithm =
             new CEGARAlgorithmFactory(algorithm, cpa, logger, config, shutdownNotifier)
                 .newInstance();
+      }
+
+      // add by yzc
+      if (usePlan_C) {
+        algorithm = new Plan_C_AlgorithmFactory(algorithm, cpa, logger, config, shutdownNotifier).newInstance();
       }
 
       if (usePDR) {

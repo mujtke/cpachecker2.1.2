@@ -33,8 +33,7 @@ public abstract class AbstractSingleWrapperState
   private final @Nullable AbstractState wrappedState;
 
   protected AbstractSingleWrapperState(@Nullable AbstractState pWrappedState) {
-    // TODO this collides with some CPAs' way of handling dummy states, but it should really be not
-    // null here
+    // TODO this collides with some CPAs' way of handling dummy states, but it should really be not null here
     // Preconditions.checkNotNull(pWrappedState);
     wrappedState = pWrappedState;
   }
