@@ -70,6 +70,7 @@ import org.sosy_lab.cpachecker.core.specification.PropertyFileParser.InvalidProp
 import org.sosy_lab.cpachecker.cpa.automaton.AutomatonGraphmlParser;
 import org.sosy_lab.cpachecker.cpa.testtargets.TestTargetType;
 import org.sosy_lab.cpachecker.util.automaton.AutomatonGraphmlCommon.WitnessType;
+import org.sosy_lab.cpachecker.util.globalinfo.GlobalInfo;
 import org.sosy_lab.cpachecker.util.resources.ResourceLimitChecker;
 
 @SuppressForbidden("System.out in this class is ok")
@@ -112,6 +113,7 @@ public class CPAMain {
     }
     final LogManager logManager = BasicLogManager.create(logOptions);
     cpaConfig.enableLogging(logManager);
+    GlobalInfo.getInstance().setLogger(logManager);
 
     if (!System.getProperty("file.encoding", "UTF-8").equalsIgnoreCase("UTF-8")) {
       logManager.logf(

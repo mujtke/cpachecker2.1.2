@@ -15,15 +15,19 @@ import com.google.common.base.Predicates;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.Map.Entry;
 import java.util.Objects;
+import java.util.Set;
+import org.checkerframework.checker.nullness.qual.NonNull;
 import org.sosy_lab.cpachecker.core.defaults.AbstractSingleWrapperState;
 import org.sosy_lab.cpachecker.core.defaults.LatticeAbstractState;
+import org.sosy_lab.cpachecker.core.interfaces.AbstractQueryableState;
 import org.sosy_lab.cpachecker.core.interfaces.AbstractState;
 import org.sosy_lab.cpachecker.core.interfaces.Graphable;
-import org.sosy_lab.cpachecker.cpa.usage.UsageState;
-import org.sosy_lab.cpachecker.cpa.usage.UsageState.StateStatistics;
+import org.sosy_lab.cpachecker.core.interfaces.Targetable;
 import org.sosy_lab.cpachecker.exceptions.CPAException;
+import org.sosy_lab.cpachecker.exceptions.InvalidQueryException;
 import org.sosy_lab.cpachecker.util.AbstractStates;
 import org.sosy_lab.cpachecker.util.Pair;
 import org.sosy_lab.cpachecker.util.identifiers.AbstractIdentifier;
@@ -35,10 +39,26 @@ import org.sosy_lab.cpachecker.util.statistics.StatTimer;
 import org.sosy_lab.cpachecker.util.statistics.StatisticsWriter;
 
 public class RacerState extends AbstractSingleWrapperState
-    implements LatticeAbstractState<RacerState>, AliasInfoProvider, Graphable {
+    implements LatticeAbstractState<RacerState>, AliasInfoProvider, Graphable, Targetable,
+               AbstractQueryableState {
 
   protected final StateStatistics stats;
+
+  // TODO implements Targetable interface
+  @Override
+  public boolean isTarget() {
+    //return super.isTarget();
+    return isRaceKeyState;
+  }
+
+  @Override
+  public @NonNull Set<TargetInformation> getTargetInformation() throws IllegalStateException {
+    //return super.getTargetInformation();
+    return new HashSet<TargetInformation>();
+  }
+
   protected ImmutableMap<AbstractIdentifier, AbstractIdentifier> variableBindingRelation;
+  private boolean isRaceKeyState;
 
   protected RacerState(
       final AbstractState pWrappedState,
@@ -48,6 +68,7 @@ public class RacerState extends AbstractSingleWrapperState
     variableBindingRelation = pVarBind;
     stats = pStats;
     pStats.statCounter.setNextValue(variableBindingRelation.size());
+    isRaceKeyState = false;
   }
 
   public static RacerState createInitialState(final AbstractState pWrappedState) {
@@ -158,6 +179,36 @@ public class RacerState extends AbstractSingleWrapperState
     if (newId != pIdentifier) {
       pSet.remove(pIdentifier);
     }
+  }
+
+  // implements AbstractQueryableState interface
+  @Override
+  public String getCPAName() {
+    return "RacerUsageCPA";
+  }
+
+  public void setRaceKeyState(boolean pRaceKeyState) {
+    isRaceKeyState = pRaceKeyState;
+  }
+
+  @Override
+  public boolean checkProperty(String property) throws InvalidQueryException {
+    //return AbstractQueryableState.super.checkProperty(property);
+    if (property.equalsIgnoreCase("data-race")) {
+      return isRaceKeyState;
+    } else {
+      throw new InvalidQueryException("The Query \"" + property + "\" is invalid.");
+    }
+  }
+
+  @Override
+  public Object evaluateProperty(String property) throws InvalidQueryException {
+    return checkProperty(property);
+  }
+
+  @Override
+  public void modifyProperty(String modification) throws InvalidQueryException {
+    AbstractQueryableState.super.modifyProperty(modification);
   }
 
   public static class StateStatistics {

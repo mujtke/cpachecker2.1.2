@@ -19,9 +19,12 @@ import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.logging.Level;
 import org.sosy_lab.common.log.LogManager;
+import org.sosy_lab.cpachecker.core.interfaces.AbstractState;
+import org.sosy_lab.cpachecker.cpa.arg.ARGState;
 import org.sosy_lab.cpachecker.cpa.racer.RacerState;
 import org.sosy_lab.cpachecker.cpa.racer.UsageInfo;
 import org.sosy_lab.cpachecker.cpa.racer.storage.AbstractUsagePointSet;
+import org.sosy_lab.cpachecker.util.AbstractStates;
 import org.sosy_lab.cpachecker.util.Pair;
 import org.sosy_lab.cpachecker.util.identifiers.SingleIdentifier;
 import org.sosy_lab.cpachecker.util.identifiers.StructureIdentifier;
@@ -199,6 +202,13 @@ public class RacerUsageContainer {
     for (Entry<SingleIdentifier, ? extends AbstractUsagePointSet> entry : storage.entrySet()) {
       Pair<UsageInfo, UsageInfo> tmpPair = detector.getUnsafePair(entry.getValue());
       stableUnsafes.put(entry.getKey(), tmpPair);
+      // TODO add targetInfo to keyState for Usage
+      AbstractState s1 = tmpPair.getFirst().getKeyState();
+      AbstractState s2 = tmpPair.getSecond().getKeyState();
+      RacerState r1 = AbstractStates.extractStateByType(s1, RacerState.class);
+      RacerState r2 = AbstractStates.extractStateByType(s2, RacerState.class);
+      r1.setRaceKeyState(true);
+      r2.setRaceKeyState(true);
     }
   }
 

@@ -113,6 +113,9 @@ public interface Property {
     TERMINATION("F end"),
 
     ASSERT("G assert"),
+
+    //TODO added by yzc
+    DATA_RACE("G ! data-race"),
     ;
 
     private final String representation;

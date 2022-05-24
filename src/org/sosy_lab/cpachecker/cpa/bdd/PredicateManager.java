@@ -76,7 +76,8 @@ public class PredicateManager {
 
   private final NamedRegionManager rmgr;
 
-  PredicateManager(final Configuration config, final NamedRegionManager pRmgr, final CFA pCfa)
+  // yzc modified 2022.05.23
+  public PredicateManager(final Configuration config, final NamedRegionManager pRmgr, final CFA pCfa)
       throws InvalidConfigurationException {
     config.inject(this);
     rmgr = pRmgr;

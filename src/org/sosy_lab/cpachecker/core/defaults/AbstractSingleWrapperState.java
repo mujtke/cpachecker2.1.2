@@ -12,6 +12,7 @@ import static com.google.common.base.Preconditions.checkState;
 
 import com.google.common.collect.ImmutableList;
 import java.util.Set;
+import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.sosy_lab.cpachecker.core.interfaces.AbstractState;
 import org.sosy_lab.cpachecker.core.interfaces.AbstractWrapperState;
@@ -52,7 +53,7 @@ public abstract class AbstractSingleWrapperState
   }
 
   @Override
-  public Set<TargetInformation> getTargetInformation() throws IllegalStateException {
+  public @NonNull Set<TargetInformation> getTargetInformation() throws IllegalStateException {
     checkState(isTarget());
     return ((Targetable) wrappedState).getTargetInformation();
   }

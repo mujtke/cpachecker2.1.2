@@ -22,6 +22,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
+import org.checkerframework.checker.nullness.qual.NonNull;
 import org.sosy_lab.cpachecker.core.interfaces.AbstractState;
 import org.sosy_lab.cpachecker.core.interfaces.AbstractWrapperState;
 import org.sosy_lab.cpachecker.core.interfaces.Graphable;
@@ -63,7 +64,7 @@ public class CompositeState
   }
 
   @Override
-  public Set<TargetInformation> getTargetInformation() throws IllegalStateException {
+  public @NonNull Set<TargetInformation> getTargetInformation() throws IllegalStateException {
     checkState(isTarget());
     ImmutableSet.Builder<TargetInformation> properties = ImmutableSet.builder();
     for (AbstractState element : states) {

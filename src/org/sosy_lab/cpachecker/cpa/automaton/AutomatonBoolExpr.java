@@ -49,6 +49,7 @@ import org.sosy_lab.cpachecker.cfa.model.FunctionSummaryEdge;
 import org.sosy_lab.cpachecker.core.interfaces.AbstractQueryableState;
 import org.sosy_lab.cpachecker.core.interfaces.AbstractState;
 import org.sosy_lab.cpachecker.cpa.automaton.AutomatonASTComparator.ASTMatcher;
+import org.sosy_lab.cpachecker.cpa.automaton.AutomatonBoolExpr.CPAQuery;
 import org.sosy_lab.cpachecker.exceptions.CPATransferException;
 import org.sosy_lab.cpachecker.exceptions.InvalidQueryException;
 import org.sosy_lab.cpachecker.exceptions.UnrecognizedCFAEdgeException;
@@ -266,8 +267,8 @@ interface AutomatonBoolExpr extends AutomatonExpression<Boolean> {
             return TraversalProcess.ABORT;
           }
           return AutomatonGraphmlCommon.handleAsEpsilonEdge(pEdge)
-              ? TraversalProcess.CONTINUE
-              : TraversalProcess.SKIP;
+                 ? TraversalProcess.CONTINUE
+                 : TraversalProcess.SKIP;
         }
 
         @Override
@@ -926,10 +927,10 @@ interface AutomatonBoolExpr extends AutomatonExpression<Boolean> {
                     .filter(
                         e ->
                             (e instanceof AStatementEdge
-                                    && call.equals(((AStatementEdge) e).getStatement()))
+                                && call.equals(((AStatementEdge) e).getStatement()))
                                 || (e instanceof FunctionReturnEdge
-                                    && summaryEdge.equals(
-                                        ((FunctionReturnEdge) e).getSummaryEdge())));
+                                && summaryEdge.equals(
+                                ((FunctionReturnEdge) e).getSummaryEdge())));
             leavingEdges = Iterables.concat(leavingEdges, potentialFurtherMatches);
           }
         }
@@ -1232,8 +1233,9 @@ interface AutomatonBoolExpr extends AutomatonExpression<Boolean> {
 
     @Override
     public boolean equals(Object pOther) {
-      if (pOther instanceof CPAQuery) {
-        CPAQuery other = (CPAQuery) pOther;
+      // TODO here, not sure
+      if (pOther instanceof AutomatonBoolExpr.CPAQuery) {
+        AutomatonBoolExpr.CPAQuery other = (AutomatonBoolExpr.CPAQuery) pOther;
         return cpaName.equals(other.cpaName) && queryString.equals(other.queryString);
       }
       return false;

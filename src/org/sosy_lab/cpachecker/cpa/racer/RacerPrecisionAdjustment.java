@@ -67,6 +67,8 @@ public class RacerPrecisionAdjustment implements PrecisionAdjustment {
     AbstractState newElement = unwrappedResult.abstractState();
     Precision newPrecision = unwrappedResult.precision();
     Action action = unwrappedResult.action();
+    // TODO debug
+    //action = Action.BREAK;
 
     if ((oldElement == newElement) && (oldPrecision == newPrecision)) {
       // nothing has changed

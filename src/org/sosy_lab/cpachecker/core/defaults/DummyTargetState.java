@@ -10,6 +10,7 @@ package org.sosy_lab.cpachecker.core.defaults;
 
 import com.google.common.collect.ImmutableSet;
 import java.util.Set;
+import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.sosy_lab.cpachecker.core.interfaces.AbstractState;
 import org.sosy_lab.cpachecker.core.interfaces.Partitionable;
@@ -69,7 +70,7 @@ public final class DummyTargetState implements AbstractState, Targetable, Partit
   }
 
   @Override
-  public Set<TargetInformation> getTargetInformation() {
+  public @NonNull Set<TargetInformation> getTargetInformation() {
     return properties;
   }
 

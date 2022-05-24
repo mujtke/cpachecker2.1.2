@@ -10,6 +10,7 @@ package org.sosy_lab.cpachecker.util.error;
 
 import com.google.common.collect.ImmutableSet;
 import java.util.Set;
+import org.checkerframework.checker.nullness.qual.NonNull;
 import org.sosy_lab.cpachecker.core.interfaces.AbstractState;
 import org.sosy_lab.cpachecker.cpa.arg.ARGState;
 
@@ -27,7 +28,7 @@ public class DummyErrorState extends ARGState {
   }
 
   @Override
-  public Set<TargetInformation> getTargetInformation() {
+  public @NonNull Set<TargetInformation> getTargetInformation() {
     return ImmutableSet.of();
   }
 

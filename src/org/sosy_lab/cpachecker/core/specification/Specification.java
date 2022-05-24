@@ -74,6 +74,8 @@ public final class Specification {
           .put(CommonVerificationProperty.DEADLOCK, "deadlock")
           .put(CommonVerificationProperty.ASSERT, "JavaAssertion")
           // .put(CommonPropertyType.TERMINATION, "none needed")
+          // TODO not sure
+          .put(CommonVerificationProperty.DATA_RACE, "sv-comp-datarace")
           .buildOrThrow();
 
   private static Path getAutomatonForProperty(Property property) {

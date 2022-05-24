@@ -24,6 +24,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
+import org.checkerframework.checker.nullness.qual.NonNull;
 import org.sosy_lab.cpachecker.cfa.ast.AExpression;
 import org.sosy_lab.cpachecker.core.interfaces.AbstractQueryableState;
 import org.sosy_lab.cpachecker.core.interfaces.AbstractStateWithAssumptions;
@@ -196,7 +197,7 @@ public class AutomatonState
   }
 
   @Override
-  public Set<TargetInformation> getTargetInformation() throws IllegalStateException {
+  public @NonNull Set<TargetInformation> getTargetInformation() throws IllegalStateException {
     checkState(isTarget());
     return ImmutableSet.of(targetInformation);
   }

@@ -19,6 +19,7 @@ import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.FluentIterable;
 import com.google.common.collect.Iterables;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
@@ -42,6 +43,7 @@ import org.sosy_lab.cpachecker.cfa.model.AStatementEdge;
 import org.sosy_lab.cpachecker.cfa.model.CFAEdge;
 import org.sosy_lab.cpachecker.cfa.model.CFAEdgeType;
 import org.sosy_lab.cpachecker.cfa.model.CFANode;
+import org.sosy_lab.cpachecker.cfa.postprocessing.global.CFACloner;
 import org.sosy_lab.cpachecker.core.interfaces.AbstractQueryableState;
 import org.sosy_lab.cpachecker.core.interfaces.AbstractState;
 import org.sosy_lab.cpachecker.core.interfaces.AbstractStateWithLocations;
@@ -690,6 +692,30 @@ public class RacerThreadingState implements AbstractState, AbstractStateWithLoca
             return getFunctionName(((CCastExpression) fName).getOperand());
         } else {
             throw new UnsupportedOperationException("Unsupported expression in pthread_create: " + fName);
+        }
+    }
+
+    int getNewThreadNum(String pFuncName) {
+        Map<String, Integer> thrdNumMap = new HashMap<>();
+        for (RacerThreadingState.ThreadState ts : threads.values()) {
+            AbstractState locs = ts.getLocation();
+            if (locs instanceof LocationState) {
+                String[] funcInfo =
+                    ((LocationState) locs).getLocationNode().getFunctionName().split(CFACloner.SEPARATOR);
+                if (!thrdNumMap.containsKey(funcInfo[0])) {
+                    thrdNumMap.put(funcInfo[0], 1);
+                } else {
+                    thrdNumMap.put(funcInfo[0], thrdNumMap.get(funcInfo[0]) + 1);
+                }
+            } else {
+                return getSmallestMissingThreadNum();
+            }
+        }
+
+        if (thrdNumMap.containsKey(pFuncName)) {
+            return thrdNumMap.get(pFuncName) + 1;
+        } else {
+            return 1;
         }
     }
 }

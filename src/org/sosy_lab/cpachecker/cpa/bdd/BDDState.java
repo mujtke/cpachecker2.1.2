@@ -167,4 +167,14 @@ public class BDDState implements AbstractQueryableState, LatticeAbstractState<BD
     }
     return new BDDState(manager, bvmgr, manager.makeExists(currentState, toForget));
   }
+
+  // yzc add 2022.05.23
+  public NamedRegionManager getManager() {
+    return manager;
+  }
+
+  // yzc add 2022.05.23
+  public BitvectorManager getBvmgr() {
+    return bvmgr;
+  }
 }

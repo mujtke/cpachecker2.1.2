@@ -58,7 +58,8 @@ public class BDDVectorCExpressionVisitor
    *
    * @param pMachineModel where to get info about types, for casting and overflows
    */
-  protected BDDVectorCExpressionVisitor(
+  // yzc modified 2022.05.23, change 'protected' to public
+  public BDDVectorCExpressionVisitor(
       final PredicateManager pPredMgr,
       final VariableTrackingPrecision pPrecision,
       final BitvectorManager pBVmgr,

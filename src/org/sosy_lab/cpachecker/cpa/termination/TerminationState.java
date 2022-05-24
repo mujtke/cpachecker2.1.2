@@ -15,6 +15,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import java.util.Collection;
 import java.util.Set;
+import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.sosy_lab.cpachecker.cfa.model.CFAEdge;
 import org.sosy_lab.cpachecker.cfa.model.CFANode;
@@ -182,7 +183,7 @@ public class TerminationState extends AbstractSingleWrapperState
   }
 
   @Override
-  public Set<TargetInformation> getTargetInformation() throws IllegalStateException {
+  public @NonNull Set<TargetInformation> getTargetInformation() throws IllegalStateException {
     if (targetInformation != null) {
       return targetInformation;
     } else {

@@ -60,7 +60,7 @@ import org.sosy_lab.cpachecker.exceptions.UnrecognizedCodeException;
 import org.sosy_lab.cpachecker.util.AbstractStates;
 import org.sosy_lab.cpachecker.util.automaton.AutomatonGraphmlCommon.KeyDef;
 
-@Options(prefix="cpa.ThreadingForPlanC")
+@Options(prefix="cpa.RacerThreading")
 public final class RacerThreadingTransferRelation extends SingleEdgeTransferRelation {
 
 
@@ -94,6 +94,13 @@ public final class RacerThreadingTransferRelation extends SingleEdgeTransferRela
             secure = true
     )
     private boolean useAllPossibleClones = false;
+
+    @Option(
+        secure = true,
+        description = "use increased number for each newly created same thread."
+            + "When this option is enabled, we need not to clone a thread function many times if "
+            + "every thread function is only used once (i.e., cfa.cfaCloner.numberOfCopies can be set to 1).")
+    private boolean useIncClonedFunc = false;
 
     public static final String THREAD_START = "pthread_create";
     public static final String THREAD_JOIN = "pthread_join";
@@ -416,6 +423,7 @@ public final class RacerThreadingTransferRelation extends SingleEdgeTransferRela
         }
 
         // now create the thread
+        CIdExpression function = (CIdExpression) expr2; // added by yzc 2022.05.23
         CIdExpression id = (CIdExpression) expr0;
         String functionName = ((CIdExpression) expr2).getName();
 
@@ -433,7 +441,15 @@ public final class RacerThreadingTransferRelation extends SingleEdgeTransferRela
 
         } else {
             // a default reachability analysis can determine the thread-number on its own.
-            int newThreadNum = threadingState.getSmallestMissingThreadNum();    //获取一个没有使用过得线程编号
+
+            int newThreadNum = 0;
+            if (useIncClonedFunc) {
+                newThreadNum = threadingState.getNewThreadNum(function.getName());
+            } else {
+                newThreadNum = threadingState.getSmallestMissingThreadNum();
+            }
+
+            //int newThreadNum = threadingState.getSmallestMissingThreadNum();    //获取一个没有使用过得线程编号
             return createThreadWithNumber(threadingState, id, functionName, newThreadNum, results);
         }
     }

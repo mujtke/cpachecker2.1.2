@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.logging.Level;
+import org.checkerframework.checker.nullness.qual.NonNull;
 import org.sosy_lab.common.ShutdownNotifier;
 import org.sosy_lab.common.configuration.Configuration;
 import org.sosy_lab.common.configuration.InvalidConfigurationException;
@@ -289,7 +290,7 @@ public class TestCaseGeneratorAlgorithm implements ProgressReportingAlgorithm, S
           private static final long serialVersionUID = 5522643115974481914L;
 
           @Override
-          public Set<TargetInformation> getTargetInformation() {
+          public @NonNull Set<TargetInformation> getTargetInformation() {
             return PropertyTargetInformation.singleton(specProp);
           }
         },

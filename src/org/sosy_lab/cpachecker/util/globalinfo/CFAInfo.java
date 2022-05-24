@@ -17,9 +17,17 @@ public class CFAInfo {
   private final ImmutableMap<Integer, CFANode> nodeNumberToNode;
   private LocationStateFactory locationStateFactory;
 
-  CFAInfo(CFA cfa) {
+  // yzc modified 2022.05.23
+  private final CFA cfa;
+
+  public CFA getCFA() {
+    return cfa;
+  }
+  // yzc modified 2022.05.23
+  CFAInfo(CFA pCfa) {
+    cfa = pCfa;
     ImmutableMap.Builder<Integer, CFANode> nodeNumberToNode0 = ImmutableMap.builder();
-    for (CFANode node : cfa.getAllNodes()) {
+    for (CFANode node : pCfa.getAllNodes()) {
       nodeNumberToNode0.put(node.getNodeNumber(), node);
     }
     nodeNumberToNode = nodeNumberToNode0.buildOrThrow();

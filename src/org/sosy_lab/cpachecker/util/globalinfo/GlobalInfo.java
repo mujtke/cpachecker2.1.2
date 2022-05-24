@@ -10,6 +10,10 @@ package org.sosy_lab.cpachecker.util.globalinfo;
 
 import com.google.common.base.Preconditions;
 import java.util.Optional;
+import java.util.logging.Level;
+import org.sosy_lab.common.ShutdownNotifier;
+import org.sosy_lab.common.configuration.Configuration;
+import org.sosy_lab.common.configuration.InvalidConfigurationException;
 import org.sosy_lab.common.log.LogManager;
 import org.sosy_lab.cpachecker.cfa.CFA;
 import org.sosy_lab.cpachecker.core.interfaces.ConfigurableProgramAnalysis;
@@ -31,6 +35,17 @@ public class GlobalInfo {
   private AbstractionManager absManager;
   private ApronManager apronManager;
   private LogManager apronLogger;
+  private LogManager logger;
+  private EdgeInfo edgeInfo;
+  private ConfigurableProgramAnalysis cpa;
+
+  public Optional<ConfigurableProgramAnalysis> getCPA() {
+    return Optional.ofNullable(cpa);
+  }
+
+  public void setLogger(LogManager pLogger) {
+    logger = pLogger;
+  }
 
   private GlobalInfo() {}
 
@@ -39,6 +54,19 @@ public class GlobalInfo {
       instance = new GlobalInfo();
     }
     return instance;
+  }
+
+  public synchronized void
+  buildEdgeInfo(final Configuration pConfig, final ShutdownNotifier pShutdownNotifier) {
+    Preconditions.checkState((cfaInfo != null) && (logger != null) && (pConfig != null));
+
+    try {
+      CFA cfa = cfaInfo.getCFA();
+      edgeInfo = new EdgeInfo(cfa, pConfig, logger, pShutdownNotifier);
+    } catch (InvalidConfigurationException e) {
+      logger
+          .log(Level.SEVERE, "Failed to build the Conditional Dependency Graph: " + e.getMessage());
+    }
   }
 
   public synchronized void storeCFA(CFA cfa) {
@@ -50,6 +78,7 @@ public class GlobalInfo {
   }
 
   public synchronized void setUpInfoFromCPA(ConfigurableProgramAnalysis pCpa) {
+    this.cpa = pCpa;
     absManager = null;
     apronManager = null;
     apronLogger = null;
@@ -100,5 +129,10 @@ public class GlobalInfo {
   public synchronized FormulaManagerView getAssumptionStorageFormulaManager() {
     Preconditions.checkState(assumptionFormulaManagerView != null);
     return assumptionFormulaManagerView;
+  }
+
+  public synchronized EdgeInfo getEdgeInfo() {
+    Preconditions.checkState(edgeInfo != null);
+    return edgeInfo;
   }
 }

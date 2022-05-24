@@ -732,6 +732,11 @@ bmc.simplifyBooleanFormula = false
 # Use generalized counterexamples to induction as candidate invariants.
 bmc.usePropertyDirection = false
 
+# With this option enabled, function calls that occur in the CFA are
+# followed. By disabling this option one can traverse a function without
+# following function calls (in this case FunctionSummaryEdges are used)
+cap.por.cbippor.followFunctionCalls = true
+
 # File name where to put the path program that is generated as input for
 # CBMC. A temporary file is used if this is unspecified. If specified, the
 # file name should end with '.i' because otherwise CBMC runs the
@@ -1819,6 +1824,11 @@ cpa.invariants.useMod2Template = false
 # use pointer-alias information in strengthening, if available.
 cpa.invariants.usePointerAliasStrengthening = true
 
+# With this option enabled, function calls that occur in the CFA are
+# followed. By disabling this option one can traverse a function without
+# following function calls (in this case FunctionSummaryEdges are used)
+cpa.ipor.followFunctionCalls = true
+
 # With this option the handling of global variables during the analysis can
 # be fine-tuned. For example while doing a function-wise analysis it is
 # important to assume that all global variables are live. In contrast to
@@ -1840,6 +1850,38 @@ cpa.local.localvariables = {}
 # followed. By disabling this option one can traverse a function without
 # following function calls (in this case FunctionSummaryEdges are used)
 cpa.location.followFunctionCalls = true
+
+# allow assignments of a new thread to the same left-hand-side as an existing
+# thread.
+cpa.locations.allowMultipleLHS = false
+
+# With this option enabled, function calls that occur in the CFA are
+# followed. By disabling this option one can traverse a function without
+# following function calls (in this case FunctionSummaryEdges are used)
+cpa.locations.followFunctionCalls = true
+
+# With this option enabled, the migration between two abstract states will
+# apply to concurrent programs (compatible with serial programs).
+cpa.locations.forConcurrent = true
+
+# the maximal number of parallel threads, -1 for infinite. When combined with
+# 'useClonedFunctions=true', we need at least N cloned functions. The option
+# 'cfa.cfaCloner.numberOfCopies' should be set to N.
+cpa.locations.maxNumberOfThreads = 5
+
+# in case of witness validation we need to check all possible function calls
+# of cloned CFAs.
+cpa.locations.useAllPossibleClones = false
+
+# do not use the original functions from the CFA, but cloned ones. See
+# cfa.postprocessing.CFACloner for detail.
+cpa.locations.useClonedFunctions = true
+
+# use increased number for each newly created same thread.When this option is
+# enabled, we need not to clone a thread function many times if every thread
+# function is only used once (i.e., cfa.cfaCloner.numberOfCopies can be set
+# to 1).
+cpa.locations.useIncClonedFunc = false
 
 # What are we searching for: race or deadlock
 cpa.lock.analysisMode = RACE
@@ -1867,9 +1909,31 @@ cpa.lock.refinement = false
 
 # stop path exploration if a lock limit is reached
 cpa.lock.stopAfterLockLimit = false
+cpa.lock.stopAfterLockLimit = true
 
 # Consider or not special cases with empty lock sets
 cpa.lock.stopMode = DEFAULT
+  enum:     [DEFAULT, EMPTYLOCKSET]
+
+# What are we searching for: race or deadlock
+cpa.lockOld.analysisMode = RACE
+  enum:     [RACE, DEADLOCK]
+
+# Consider or not lock guards
+cpa.lockOld.considerLockGuards = true
+
+# which merge operator to use for LockCPA
+cpa.lockOld.merge = "SEP"
+  allowed values: [SEP, JOIN]
+
+# Enable refinement procedure
+cpa.lockOld.refinement = false
+
+# stop path exploration if a lock limit is reached
+cpa.lockOld.stopAfterLockLimit = false
+
+# Consider or not special cases with empty lock sets
+cpa.lockOld.stopMode = DEFAULT
   enum:     [DEFAULT, EMPTYLOCKSET]
 
 # Only checks for targets after loops were unrolled exactly a number of times
@@ -2009,6 +2073,72 @@ cpa.pointerA.merge = "JOIN"
 # which stop operator to use for PointerACPA
 cpa.pointerA.stop = "SEP"
   allowed values: [SEP, JOIN, NEVER]
+
+# which merge operator to use for PointerCPA
+cpa.pointerOld.merge = "JOIN"
+  allowed values: [JOIN, SEP]
+
+# whether the resulting Points-To map needs to be printed into file
+cpa.pointerOld.noOutput = true
+
+# name of a file containing information on pointer relations
+cpa.pointerOld.precisionFile = "TrackedPointers"
+
+# whether to use the fake locations during analysis (more precise, but also
+# slower)
+cpa.pointerOld.useFakeLocs = false
+
+# With this option enabled, function calls that occur in the CFA are
+# followed. By disabling this option one can traverse a function without
+# following function calls (in this case FunctionSummaryEdges are used)
+cpa.por.bippor.followFunctionCalls = true
+
+# With this option enabled, the optimization strategy for reducing the
+# redundant exploration of re-sorted read events is used.
+cpa.por.bippor.useOptDisableStates = true
+
+# With this option enabled, the optimization strategy for removing repeated
+# key-event path order is used.
+cpa.por.bippor.useOptKEPHRemove = false
+
+# With this option enabled, function calls that occur in the CFA are
+# followed. By disabling this option one can traverse a function without
+# following function calls (in this case FunctionSummaryEdges are used)
+cpa.por.bppor.followFunctionCalls = true
+
+# With this option enabled, we just need the first edge of the determined
+# block to get the core dependent-related edge
+cpa.por.bppor.useDetBlockCache = false
+
+# With this option enabled, function calls that occur in the CFA are
+# followed. By disabling this option one can traverse a function without
+# following function calls (in this case FunctionSummaryEdges are used)
+cpa.por.ippor.followFunctionCalls = true
+cpa.por.ippor2.followFunctionCalls = true
+cpa.por.lppor.followFunctionCalls = true
+cpa.por.mpor.followFunctionCalls = true
+
+# Which type of state should be used to compute the constrained dependency at
+# certain state?
+# - bdd: BDDState (default)
+# - predicate: PredicateAbstractState
+# NOTICE: Corresponding CPA should be used!
+cpa.por.pcdpor.depComputationStateType = "BDD"
+  allowed values: [BDD, PREDICATE]
+
+# With this option enabled, function calls that occur in the CFA are
+# followed. By disabling this option one can traverse a function without
+# following function calls (in this case FunctionSummaryEdges are used)
+cpa.por.pcdpor.followFunctionCalls = true
+
+# With this option enabled, thread creation edge will be regarded as normal
+# edge, which may reduce redundant interleavings.
+cpa.por.pcdpor.regardThreadCreationAsNormalEdge = false
+
+# With this option enabled, function calls that occur in the CFA are
+# followed. By disabling this option one can traverse a function without
+# following function calls (in this case FunctionSummaryEdges are used)
+cpa.por.ppor.followFunctionCalls = true
 
 # Whether to give up immediately if a very large array is encountered
 # (heuristic, often we would just waste time otherwise)
@@ -2721,20 +2851,110 @@ cpa.racer.bindArgsFunctions = false
 # to list variable)
 cpa.racer.binderFunctions = {}
 
+# a list of functions, which do not produce notes
+cpa.racer.errorPrinter.disableNotesFor = {}
+
+# path to write results
+cpa.racer.errorPrinter.falseUnsafesOutput = "FalseUnsafes"
+
+# if a file do not exist, do not include the corresponding edge
+cpa.racer.errorPrinter.filterMissedFiles = false
+
+# filter unsafes, which are too similar
+cpa.racer.errorPrinter.filterSimilarUnsafes = false
+
+# path to write results
+cpa.racer.errorPrinter.output = "unsafe_rawdata"
+
+# print unsafes with empty lock states
+cpa.racer.errorPrinter.printEmptyLockStates = true
+
+# print all unsafe cases in report
+cpa.racer.errorPrinter.printFalseUnsafes = false
+
+# output only true unsafes
+cpa.racer.errorPrinter.printOnlyTrueUnsafes = false
+
+# use single file for output or dump every error trace to its own file
+cpa.racer.errorPrinter.singleFileOutput = false
+
+# export counterexample core as text file
+cpa.racer.export.witnessTemplate = "witness.%s.graphml"
+
 # do not use initial variable in analysis if found an alias for it
 cpa.racer.filterAliases = true
+
+# all variables should be printed to the one file or to the different
+cpa.racer.outputType = KLEVER
+  enum:     [ETV, KLEVER, KLEVER3, KLEVER_OLD]
 
 # A path to precision
 cpa.racer.precision.path = "localsave"
 
+# output only true unsafes
+cpa.racer.printOnlyTrueUnsafes = false
+
+# print found unsafes in case of unknown verdict
+cpa.racer.printUnsafesIfUnknown = true
+
+# Should we process the same blocks with covered sets of locks
+cpa.racer.processCoveredUsages = true
+
 # functions, which we don't analize
 cpa.racer.skippedfunctions = {}
+
+# ignore unsafes only with empty callstacks
+cpa.racer.unsafedetector.ignoreEmptyLockset = true
+
+# A name of interrupt lock for checking deadlock free
+cpa.racer.unsafedetector.intLock = no default value
+
+# defines what is unsafe
+cpa.racer.unsafedetector.unsafeMode = RACE
+  enum:     [RACE, DEADLOCKCIRCULAR, DEADLOCKDISPATCH]
+
+# Use several threads for usage extraction
+cpa.racer.useConcurrentExtraction = true
 
 # use sound regions as identifiers
 cpa.racer.useSoundRegions = false
 
 # functions, which are marked as write access
 cpa.racer.writeAccessFunctions = {}
+
+# Name of a function responsible for assignment to RCU pointers
+cpa.rcucpa.assign = "ldv_rcu_assign_pointer"
+
+# Name of a function responsible for dereferences of RCU pointers
+cpa.rcucpa.deref = "ldv_rcu_dereference"
+
+# Name of a function marking a call to a fictional read lock of RCU pointer
+cpa.rcucpa.fictReadLock = "ldv_rlock_rcu"
+
+# Name of a function marking a call to a fictional read unlock of RCU pointer
+cpa.rcucpa.fictReadUnlock = "ldv_runlock_rcu"
+
+# Name of a function marking a call to a fictional write lock of RCU pointer
+cpa.rcucpa.fictWriteLock = "ldv_wlock_rcu"
+
+# Name of a function marking a call to a fictional write unlock of RCU
+# pointer
+cpa.rcucpa.fictWriteUnlock = "ldv_wunlock_rcu"
+
+# Name of a file containing RCU pointers
+cpa.rcucpa.rcuPointersFile = "RCUPointers"
+
+# Name of a function responsible for acquiring the RCU read lock
+cpa.rcucpa.readLock = "ldv_rcu_read_lock"
+
+# Name of a function responsible for releasing the RCU read lock
+cpa.rcucpa.readUnlock = "ldv_rcu_read_unlock"
+
+# Name of a function responsible for the handling of a grace period
+cpa.rcucpa.sync = "ldv_synchronize_rcu"
+
+# name of a file to hold information about RCU pointers and their aliases
+cpa.rcusearch.output = "RCUPointers"
 
 # Whether to consider constraints on program variables (e.g., x > 10) as
 # definitions)
@@ -3572,6 +3792,49 @@ dependencegraph.pointerAnalysisTime = 0s
 # methods: PointerStateComputationMethod.FLOW_SENSITIVE,
 # PointerStateComputationMethod.FLOW_INSENSITIVE
 dependencegraph.pointerStateComputationMethods = [PointerStateComputationMethod.FLOW_SENSITIVE]
+
+# This option add node for global variable initialization edges (it is mainly
+# used for )
+depgraph.cond.addNodeForGVars = false
+
+# A list of function pairs that could forms an 'atomic' block, only one
+# thread could executes the instructions in this block.
+depgraph.cond.blockfunc = no default value
+
+# Whether consider to build the depedence relation for cloned functions (this
+# option is mainly used for debugging). If not enabled, the conditional
+# dependence graph is incompelete, and it should not be used in program
+# verification!
+depgraph.cond.buildClonedFunc = true
+
+# Whether build node and constraints for navie thread function (these
+# functions are never used in real ARG exploration). Notice that, if this
+# option and buildForClonedFunctions are disabled, then an empty graph will
+# be generated.
+depgraph.cond.buildForNoneCloneThread = false
+
+# Export this dependency graph into a file in DOT format.
+depgraph.cond.export = false
+
+# File to export dependence graph to. If `null`, dependence graph will not be
+# exported as dot.
+depgraph.cond.exportDot = "CondDependenceGraph.dot"
+
+# This option specificies the name of the main function (it is mainly used
+# for decrease the size of the dependence graph)
+depgraph.cond.mainfunc = "main"
+
+# Remove isolated nodes in the conditional dependency graph, these nodes have
+# no effect with other transitions.
+depgraph.cond.removeIsolatedNodes = false
+
+# Whether to consider conditional dependencies. If not, then two depedent
+# nodes will allways be un-conditionally dependent.
+depgraph.cond.useCondDep = false
+
+# Use solver to compute more precise independence constraints
+# (time-consuming), otherwise we only simply the constraints.
+depgraph.cond.useSolverToCompute = false
 
 # ignore declarations when detecting modifications, be careful when variables
 # are renamed (could be unsound)
@@ -4634,6 +4897,9 @@ undefinedFunctionsCollector.stubsFile = "stubs.c"
 
 # select an analysis from a set of analyses after unknown result
 useCompositionAnalysis = false
+
+# build constrained dependency graph (only for partial-order reduction)
+utils.edgeinfo.buildDepGraph = false
 
 # Instead of comments, output the assertions into the original program as
 # violations to unreach_call.prp
