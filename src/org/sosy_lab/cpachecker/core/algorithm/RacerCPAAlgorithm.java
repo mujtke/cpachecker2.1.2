@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import org.checkerframework.checker.nullness.qual.Nullable;
@@ -35,6 +36,7 @@ import org.sosy_lab.cpachecker.cfa.model.CFANode;
 import org.sosy_lab.cpachecker.core.CPAcheckerResult.Result;
 import org.sosy_lab.cpachecker.core.defaults.MergeSepOperator;
 import org.sosy_lab.cpachecker.core.interfaces.AbstractState;
+import org.sosy_lab.cpachecker.core.interfaces.AbstractStateWithLocations;
 import org.sosy_lab.cpachecker.core.interfaces.ConfigurableProgramAnalysis;
 import org.sosy_lab.cpachecker.core.interfaces.ForcedCovering;
 import org.sosy_lab.cpachecker.core.interfaces.MergeOperator;
@@ -48,6 +50,7 @@ import org.sosy_lab.cpachecker.core.interfaces.StopOperator;
 import org.sosy_lab.cpachecker.core.interfaces.TransferRelation;
 import org.sosy_lab.cpachecker.core.reachedset.ReachedSet;
 import org.sosy_lab.cpachecker.core.reachedset.UnmodifiableReachedSet;
+import org.sosy_lab.cpachecker.cpa.arg.ARGState;
 import org.sosy_lab.cpachecker.cpa.racerThreading.RacerThreadingState;
 import org.sosy_lab.cpachecker.cpa.arg.ARGMergeJoinCPAEnabledAnalysis;
 import org.sosy_lab.cpachecker.cpa.racer.RacerUsageReachedSet;
@@ -459,6 +462,7 @@ public class RacerCPAAlgorithm implements Algorithm, StatisticsProvider {
       }
 
       if (stop) {
+//        System.out.println("stop!");
         logger.log(Level.FINER, "Successor is covered or unreachable, not adding to waitlist");
         stats.countStop++;
 
@@ -477,6 +481,7 @@ public class RacerCPAAlgorithm implements Algorithm, StatisticsProvider {
 
         // TODO: debug
         if (suc.locationCovered) { // 如果满足Location覆盖
+//          System.out.println("location covered");
           /**
            * 将该状态暂时放到被覆盖列表中
            */
@@ -485,14 +490,22 @@ public class RacerCPAAlgorithm implements Algorithm, StatisticsProvider {
           // 这里需要重写add方法，不要将状态放回到waitlist中去
           // 如果是因为位置覆盖，则该后继状态应该放到newSuccessorsInEachIteration中去
           ((RacerUsageReachedSet) reachedSet).newSuccessorsInEachIteration.put(successor, successorPrecision);
+
+//          System.out.println("Covered found  &&&  reachedSet size: " + reachedSet.size() + ", state id: " + ((ARGState)successor).getStateId());
         } else {
           logger.log(Level.FINER, "No need to stop, adding successor to waitlist");
 
           stats.addTimer.start();
           reachedSet.add(successor, successorPrecision);    //reached = reached U {(e_hat, π_hat)}
 
+//          System.out.println("reachedSet size: " + reachedSet.size() + ", state id: " + ((ARGState)successor).getStateId());
           // 将对应的后继添加到newSuccessorsInEachIteration中
           ((RacerUsageReachedSet) reachedSet).newSuccessorsInEachIteration.put(successor, successorPrecision);
+
+          // 将新产生的后继的location放到RacerUsageReachedSet中的visitedLocations中
+            AbstractStateWithLocations
+                stateWithLocations = extractStateByType(successor, AbstractStateWithLocations.class);
+            stateWithLocations.getLocationNodes().forEach(l -> RacerUsageReachedSet.visitedLocations.add(l));
 
           stats.addTimer.stop();
         }

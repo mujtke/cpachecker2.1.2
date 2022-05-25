@@ -36,6 +36,7 @@ import org.sosy_lab.cpachecker.core.interfaces.Statistics;
 import org.sosy_lab.cpachecker.core.interfaces.StatisticsProvider;
 import org.sosy_lab.cpachecker.core.reachedset.ReachedSet;
 import org.sosy_lab.cpachecker.core.reachedset.UnmodifiableReachedSet;
+import org.sosy_lab.cpachecker.cpa.arg.ARGState;
 import org.sosy_lab.cpachecker.cpa.racer.RacerUsageReachedSet;
 import org.sosy_lab.cpachecker.exceptions.CPAException;
 
@@ -109,6 +110,7 @@ public class Plan_C_Algorithm implements Algorithm, StatisticsProvider, ReachedS
     AlgorithmStatus status = AlgorithmStatus.SOUND_AND_PRECISE;
 
     final boolean _debug_ = false;
+    long plancAlgorithmTime = System.currentTimeMillis();
     stats.totalTimer.start();
     try {
 
@@ -146,25 +148,27 @@ public class Plan_C_Algorithm implements Algorithm, StatisticsProvider, ReachedS
           break;
         }
 
-        // 将新产生的后继的location放到RacerUsageReachedSet中的visitedLocations中
-        Set<AbstractState> newGottenLocs = ((RacerUsageReachedSet)reached).newSuccessorsInEachIteration.keySet();
-        Iterator<AbstractState> it = newGottenLocs.iterator();
-        while (it.hasNext()) {
-          AbstractState p = it.next();
-          AbstractStateWithLocations stateWithLocations = extractStateByType(p, AbstractStateWithLocations.class);
-          for (CFANode node : stateWithLocations.getLocationNodes()) {
-            RacerUsageReachedSet.visitedLocations.add(node);
-          }
-        }
+//        // 将新产生的后继的location放到RacerUsageReachedSet中的visitedLocations中
+//        Set<AbstractState> newGottenLocs = ((RacerUsageReachedSet)reached).newSuccessorsInEachIteration.keySet();
+//        Iterator<AbstractState> it = newGottenLocs.iterator();
+//        while (it.hasNext()) {
+//          AbstractState p = it.next();
+//          AbstractStateWithLocations stateWithLocations = extractStateByType(p, AbstractStateWithLocations.class);
+//          for (CFANode node : stateWithLocations.getLocationNodes()) {
+//            RacerUsageReachedSet.visitedLocations.add(node);
+//          }
+//        }
 
         // TODO 在下一次计算后继时，清空上一次计算得到的后继
         ((RacerUsageReachedSet)reached).newSuccessorsInEachIteration.clear();
 
       } while (!raceFound);
     } finally {
+//      System.out.println("total time Plan_C algorithm: " + (System.currentTimeMillis() - plancAlgorithmTime) + " ms");
       stats.totalTimer.stop();
-      System.out.println("Total time for Plan_C algorithm: " + stats.totalTimer);
-      System.out.println("reached set size: " + reached.size());
+//      System.out.println("Total time for Plan_C algorithm: " + stats.totalTimer);
+//      System.out.println("reached set size: " + reached.size());
+//      System.out.println("last state id: " + ((ARGState)(reached.getLastState())).getStateId());
     }
     return status;
   }

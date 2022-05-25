@@ -257,7 +257,9 @@ public class BDDTransferRelation
        * example: "scanf("%d", &input);" */
       CExpression unpackedParam = param;
       while (unpackedParam instanceof CCastExpression) {
-        unpackedParam = ((CCastExpression) param).getOperand();
+        //TODO not sure 2022.05.24
+        //unpackedParam = ((CCastExpression) param).getOperand();
+        unpackedParam = ((CCastExpression) unpackedParam).getOperand();
       }
       if (unpackedParam instanceof CUnaryExpression
           && UnaryOperator.AMPER == ((CUnaryExpression) unpackedParam).getOperator()

@@ -112,7 +112,7 @@ public class RacerUsageProcessor {
 
     // Not a set, as usage.equals do not consider id
     List<UsageInfo> result;
-     totalTimer.start();
+//     totalTimer.start();
     result = new ArrayList<>();
 
     AbstractStateWithLocations
@@ -177,7 +177,7 @@ public class RacerUsageProcessor {
       }
     }
 
-    totalTimer.stop();
+//    totalTimer.stop();
     return result;
   }
 
