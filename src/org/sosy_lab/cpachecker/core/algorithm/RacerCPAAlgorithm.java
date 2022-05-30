@@ -34,6 +34,7 @@ import org.sosy_lab.common.log.LogManager;
 import org.sosy_lab.common.time.Timer;
 import org.sosy_lab.cpachecker.cfa.model.CFANode;
 import org.sosy_lab.cpachecker.core.CPAcheckerResult.Result;
+import org.sosy_lab.cpachecker.core.algorithm.Racer.Plan_C_Algorithm;
 import org.sosy_lab.cpachecker.core.defaults.MergeSepOperator;
 import org.sosy_lab.cpachecker.core.interfaces.AbstractState;
 import org.sosy_lab.cpachecker.core.interfaces.AbstractStateWithLocations;
@@ -194,19 +195,19 @@ public class RacerCPAAlgorithm implements Algorithm, StatisticsProvider {
     private final ShutdownNotifier shutdownNotifier;
 
     public RacerCPAAlgorithmFactory(
-        ConfigurableProgramAnalysis cpa,
-        LogManager logger,
+        ConfigurableProgramAnalysis pCpa,
+        LogManager pLogger,
         Configuration config,
         ShutdownNotifier pShutdownNotifier)
         throws InvalidConfigurationException {
 
       config.inject(this);
-      this.cpa = cpa;
-      this.logger = logger;
+      this.cpa = pCpa;
+      this.logger = pLogger;
       shutdownNotifier = pShutdownNotifier;
 
       if (forcedCoveringClass != null) {
-        forcedCovering = forcedCoveringClass.create(config, logger, cpa);
+        forcedCovering = forcedCoveringClass.create(config, pLogger, pCpa);
       } else {
         forcedCovering = null;
       }
@@ -245,7 +246,7 @@ public class RacerCPAAlgorithm implements Algorithm, StatisticsProvider {
 
   private RacerCPAAlgorithm(
       ConfigurableProgramAnalysis cpa,
-      LogManager logger,
+      LogManager pLogger,
       ShutdownNotifier pShutdownNotifier,
       ForcedCovering pForcedCovering,
       boolean pIsImprecise) {
@@ -254,7 +255,7 @@ public class RacerCPAAlgorithm implements Algorithm, StatisticsProvider {
     mergeOperator = cpa.getMergeOperator();
     stopOperator = cpa.getStopOperator();
     precisionAdjustment = cpa.getPrecisionAdjustment();
-    this.logger = logger;
+    this.logger = pLogger;
     shutdownNotifier = pShutdownNotifier;
     forcedCovering = pForcedCovering;
     status = AlgorithmStatus.SOUND_AND_PRECISE.withPrecise(!pIsImprecise);
@@ -322,6 +323,7 @@ public class RacerCPAAlgorithm implements Algorithm, StatisticsProvider {
       throws CPAException, InterruptedException {
     logger.log(Level.ALL, "Current state is", state, "with precision", precision);
 
+    //System.out.println("State Id: " + ((ARGState)state).getStateId());
     if (forcedCovering != null) {
       stats.forcedCoveringTimer.start();
       try {
@@ -340,6 +342,10 @@ public class RacerCPAAlgorithm implements Algorithm, StatisticsProvider {
     Collection<? extends AbstractState> successors;
     try {
       successors = transferRelation.getAbstractSuccessors(state, precision);
+      if (Plan_C_Algorithm.__DEBUG__) {
+        System.out.printf("before handle a successor and visited locations num: %d\n", RacerUsageReachedSet.visitedLocations.size());
+        System.out.printf("\u001b[32mnewly get %d successors\u001b[0m && waitlist size %d\n", successors.size(), reachedSet.getWaitlist().size());
+      }
     } finally {
       stats.transferTimer.stop();
     }
@@ -353,6 +359,10 @@ public class RacerCPAAlgorithm implements Algorithm, StatisticsProvider {
 
     for (Iterator<? extends AbstractState> it = successors.iterator(); it.hasNext(); ) {
       AbstractState successor = it.next();
+
+      // TODO debug: whenever we processor a successor, we add it locations to visited List first
+      addVisitedLocations(successor);
+
       shutdownNotifier.shutdownIfNecessary();
       logger.log(Level.FINER, "Considering successor of current state");
       logger.log(Level.ALL, "Successor of", state, "\nis", successor);
@@ -364,6 +374,16 @@ public class RacerCPAAlgorithm implements Algorithm, StatisticsProvider {
             precisionAdjustment.prec(
                 successor, precision, reachedSet, Functions.identity(), successor);
         if (!precAdjustmentOptional.isPresent()) {
+          if (Plan_C_Algorithm.__DEBUG__) {
+            System.out.println("\u001b[96mprecision prune\u001b[0m");
+          }
+
+          // TODO debug
+          ((RacerUsageReachedSet) reachedSet).newSuccessorsInEachIteration.put(successor, null);
+//          AbstractStateWithLocations
+//              stateWithLocations = extractStateByType(successor, AbstractStateWithLocations.class);
+//          stateWithLocations.getLocationNodes().forEach(l -> RacerUsageReachedSet.visitedLocations.add(l));
+//          System.out.printf("handled a successor and visited locations num: %d\n", RacerUsageReachedSet.visitedLocations.size());
           continue;
         }
         precAdjustmentResult = precAdjustmentOptional.orElseThrow();
@@ -403,6 +423,9 @@ public class RacerCPAAlgorithm implements Algorithm, StatisticsProvider {
             // re-add the old state to the waitlist, there are unhandled
             // successors left that otherwise would be forgotten
             reachedSet.reAddToWaitlist(state);
+            if (Plan_C_Algorithm.__DEBUG__) {
+              System.out.println("\u001b[93m successor readd to waitlsit");
+            }
           }
 
           return true;
@@ -442,6 +465,9 @@ public class RacerCPAAlgorithm implements Algorithm, StatisticsProvider {
             // because ARGCPA doesn't like states in toRemove to be in the reachedSet.
             reachedSet.removeAll(toRemove);
             reachedSet.addAll(toAdd);
+            if (Plan_C_Algorithm.__DEBUG__) {
+              System.out.printf("merge add %d\n", toAdd.size());
+            }
           }
 
           if (mergeOperator instanceof ARGMergeJoinCPAEnabledAnalysis) {
@@ -465,12 +491,16 @@ public class RacerCPAAlgorithm implements Algorithm, StatisticsProvider {
 //        System.out.println("stop!");
         logger.log(Level.FINER, "Successor is covered or unreachable, not adding to waitlist");
         stats.countStop++;
+        if (Plan_C_Algorithm.__DEBUG__) {
+          System.out.println("successor covered");
+        }
 
       } else {
 
         // TODO: debug 判断当前状态是否被Location覆盖
         RacerThreadingState suc = extractStateByType(successor, RacerThreadingState.class);
         Iterable<CFANode> locs = suc.getLocationNodes();
+//        System.out.printf("visited locations num: %d\n", RacerUsageReachedSet.visitedLocations.size());
         Iterator<CFANode> ite = locs.iterator();
         suc.locationCovered = true;
         while (ite.hasNext()) {
@@ -481,7 +511,9 @@ public class RacerCPAAlgorithm implements Algorithm, StatisticsProvider {
 
         // TODO: debug
         if (suc.locationCovered) { // 如果满足Location覆盖
-//          System.out.println("location covered");
+          if (Plan_C_Algorithm.__DEBUG__) {
+            System.out.println("\u001b[35msuccessor location covered\u001b[0m");
+          }
           /**
            * 将该状态暂时放到被覆盖列表中
            */
@@ -503,16 +535,28 @@ public class RacerCPAAlgorithm implements Algorithm, StatisticsProvider {
           ((RacerUsageReachedSet) reachedSet).newSuccessorsInEachIteration.put(successor, successorPrecision);
 
           // 将新产生的后继的location放到RacerUsageReachedSet中的visitedLocations中
-            AbstractStateWithLocations
-                stateWithLocations = extractStateByType(successor, AbstractStateWithLocations.class);
-            stateWithLocations.getLocationNodes().forEach(l -> RacerUsageReachedSet.visitedLocations.add(l));
+//            AbstractStateWithLocations
+//                stateWithLocations = extractStateByType(successor, AbstractStateWithLocations.class);
+//            stateWithLocations.getLocationNodes().forEach(l -> RacerUsageReachedSet.visitedLocations.add(l));
 
+          if (Plan_C_Algorithm.__DEBUG__) {
+            System.out.println("\u001b[33msuccessor added to reachSet\u001b[0m");
+          }
           stats.addTimer.stop();
         }
+      }
+      if (Plan_C_Algorithm.__DEBUG__) {
+        System.out.printf("handled one successor and visited locations num: %d\n", RacerUsageReachedSet.visitedLocations.size());
       }
     }
 
     return false;
+  }
+
+  public void addVisitedLocations(AbstractState pState) {
+     /* 将新产生的后继的location放到RacerUsageReachedSet中的visitedLocations中 */
+    AbstractStateWithLocations stateWithLocations = extractStateByType(pState, AbstractStateWithLocations.class);
+    stateWithLocations.getLocationNodes().forEach(l -> RacerUsageReachedSet.visitedLocations.add(l));
   }
 
   @Override

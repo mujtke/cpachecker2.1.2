@@ -20,6 +20,7 @@ import org.checkerframework.checker.nullness.qual.Nullable;
 import org.sosy_lab.common.ShutdownNotifier;
 import org.sosy_lab.common.configuration.Configuration;
 import org.sosy_lab.common.configuration.InvalidConfigurationException;
+import org.sosy_lab.common.configuration.Option;
 import org.sosy_lab.common.configuration.Options;
 import org.sosy_lab.common.log.LogManager;
 import org.sosy_lab.common.time.Timer;
@@ -41,6 +42,9 @@ import org.sosy_lab.cpachecker.cpa.racer.RacerUsageReachedSet;
 import org.sosy_lab.cpachecker.exceptions.CPAException;
 
 public class Plan_C_Algorithm implements Algorithm, StatisticsProvider, ReachedSetUpdater {
+
+  /* define a debug flag */
+  public static boolean __DEBUG__ = false;
 
   private static class Plan_C_Statistics implements Statistics {
 
@@ -109,7 +113,8 @@ public class Plan_C_Algorithm implements Algorithm, StatisticsProvider, ReachedS
   public AlgorithmStatus run(ReachedSet reached) throws CPAException, InterruptedException {
     AlgorithmStatus status = AlgorithmStatus.SOUND_AND_PRECISE;
 
-    final boolean _debug_ = false;
+    final boolean _debug_ = __DEBUG__;
+    int locationLoop = 1;
     long plancAlgorithmTime = System.currentTimeMillis();
     stats.totalTimer.start();
     try {
@@ -121,17 +126,28 @@ public class Plan_C_Algorithm implements Algorithm, StatisticsProvider, ReachedS
 
         status = status.update(algorithm.run(reached));
 
+        if (_debug_) {
+          System.out.println("\u001b[31miteration " + locationLoop++ + "\u001b[0m");
+        }
         if (((RacerUsageReachedSet)reached).newSuccessorsInEachIteration.isEmpty()) {
           // 新的一轮计算中没有产生后继状态
+
           if (reached.hasWaitingState()) {
             // 还有后继没有被探索
+            if (_debug_) {
+              System.out.println("no successors got but still have wait state");
+            }
             continue;
           } else {
             // 可达图探索完成
+
             if (((RacerUsageReachedSet)reached).isStillHaveCoveredStates()) {
               // 如果存在covered的状态
               // 现将covered的状态全部放回waitlist中
               ((RacerUsageReachedSet)reached).rollbackCoveredStates();
+              if (_debug_) {
+                System.out.println("\u001b[34mclear visited locations\u001b[0m");
+              }
               continue;
             } else {
               // 没有covered的状态，结束整个计算
@@ -166,9 +182,11 @@ public class Plan_C_Algorithm implements Algorithm, StatisticsProvider, ReachedS
     } finally {
 //      System.out.println("total time Plan_C algorithm: " + (System.currentTimeMillis() - plancAlgorithmTime) + " ms");
       stats.totalTimer.stop();
-//      System.out.println("Total time for Plan_C algorithm: " + stats.totalTimer);
-//      System.out.println("reached set size: " + reached.size());
-//      System.out.println("last state id: " + ((ARGState)(reached.getLastState())).getStateId());
+      if (_debug_) {
+        System.out.println("Total time for Plan_C algorithm: " + stats.totalTimer);
+        System.out.println("reached set size: " + reached.size());
+        System.out.println("last state id: " + ((ARGState)(reached.getLastState())).getStateId());
+      }
     }
     return status;
   }

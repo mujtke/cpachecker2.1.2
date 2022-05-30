@@ -33,13 +33,7 @@ import org.sosy_lab.cpachecker.core.interfaces.StateSpacePartition;
 import org.sosy_lab.cpachecker.core.interfaces.Statistics;
 import org.sosy_lab.cpachecker.core.interfaces.StatisticsProvider;
 import org.sosy_lab.cpachecker.core.interfaces.StopOperator;
-import org.sosy_lab.cpachecker.cpa.lockOld.AbstractLockState;
-import org.sosy_lab.cpachecker.cpa.lockOld.DeadLockState;
-import org.sosy_lab.cpachecker.cpa.lockOld.LockPrecision;
-import org.sosy_lab.cpachecker.cpa.lockOld.LockReducer;
-import org.sosy_lab.cpachecker.cpa.lockOld.LockState;
-import org.sosy_lab.cpachecker.cpa.lockOld.LockStopOperator;
-import org.sosy_lab.cpachecker.cpa.lockOld.LockTransferRelation;
+
 
 @Options(prefix = "cpa.lockOld")
 public class LockCPA extends AbstractCPA

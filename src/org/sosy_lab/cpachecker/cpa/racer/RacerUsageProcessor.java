@@ -48,7 +48,6 @@ import org.sosy_lab.cpachecker.cpa.arg.ARGState;
 import org.sosy_lab.cpachecker.cpa.local.LocalState.DataType;
 import org.sosy_lab.cpachecker.cpa.racerThreading.RacerThreadingState;
 import org.sosy_lab.cpachecker.cpa.rcucpa.RCUState;
-import org.sosy_lab.cpachecker.cpa.racer.UsageInfo;
 import org.sosy_lab.cpachecker.cpa.racer.UsageInfo.Access;
 import org.sosy_lab.cpachecker.cpa.usage.VariableSkipper;
 import org.sosy_lab.cpachecker.util.AbstractStates;

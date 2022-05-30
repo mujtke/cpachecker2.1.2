@@ -138,7 +138,8 @@ public class RacerUsageCPA extends AbstractSingleWrapperCPA implements Statistic
 
   @Override
   public MergeOperator getMergeOperator() {
-    return mergeOperator;
+//    return mergeOperator;
+    return getWrappedCpa().getMergeOperator();
   }
 
   @Override

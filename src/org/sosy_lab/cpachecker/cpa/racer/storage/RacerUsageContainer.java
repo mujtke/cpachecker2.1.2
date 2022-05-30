@@ -60,6 +60,10 @@ public class RacerUsageContainer {
   private final StatCounter sharedVariables =
       new StatCounter("Number of detected shared variables");
 
+  public NavigableMap<SingleIdentifier, UnrefinedUsagePointSet> getUnrefinedIds() {
+    return unrefinedIds;
+  }
+
   private RacerUsageContainer(
       NavigableMap<SingleIdentifier, UnrefinedUsagePointSet> pUnrefinedIds,
       NavigableMap<SingleIdentifier, RefinedUsagePointSet> pRefinedIds,
