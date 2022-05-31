@@ -378,12 +378,14 @@ public class RacerCPAAlgorithm implements Algorithm, StatisticsProvider {
             System.out.println("\u001b[96mprecision prune\u001b[0m");
           }
 
-          // TODO debug
-          ((RacerUsageReachedSet) reachedSet).newSuccessorsInEachIteration.put(successor, null);
+//           TODO debug
+//          ((RacerUsageReachedSet) reachedSet).newSuccessorsInEachIteration.put(successor, null);
 //          AbstractStateWithLocations
 //              stateWithLocations = extractStateByType(successor, AbstractStateWithLocations.class);
 //          stateWithLocations.getLocationNodes().forEach(l -> RacerUsageReachedSet.visitedLocations.add(l));
-//          System.out.printf("handled a successor and visited locations num: %d\n", RacerUsageReachedSet.visitedLocations.size());
+          if (Plan_C_Algorithm.__DEBUG__) {
+            System.out.printf("handled a successor and visited locations num: %d\n", RacerUsageReachedSet.visitedLocations.size());
+          }
           continue;
         }
         precAdjustmentResult = precAdjustmentOptional.orElseThrow();
@@ -456,6 +458,7 @@ public class RacerCPAAlgorithm implements Algorithm, StatisticsProvider {
                     Level.ALL, "Merged", successor, "\nand", reachedState, "\n-->", mergedState);
                 stats.countMerge++;
 
+                // TODO complete the location cover process
                 toRemove.add(reachedState);
                 toAdd.add(Pair.of(mergedState, successorPrecision));
               }
@@ -464,7 +467,15 @@ public class RacerCPAAlgorithm implements Algorithm, StatisticsProvider {
             // If we terminate, we should still update the reachedSet if necessary
             // because ARGCPA doesn't like states in toRemove to be in the reachedSet.
             reachedSet.removeAll(toRemove);
-            reachedSet.addAll(toAdd);
+            // TODO not sure
+//            reachedSet.addAll(toAdd);
+            toAdd.forEach(l -> {
+              AbstractState s = l.getFirst();
+              Precision p = l.getSecond();
+              // mergeState's locations should be regards visited?
+              ((RacerUsageReachedSet)reachedSet).coveredStatesTable.put(s, p);
+              ((RacerUsageReachedSet)reachedSet).addButSkipWaitlist(s, p);
+            });
             if (Plan_C_Algorithm.__DEBUG__) {
               System.out.printf("merge add %d\n", toAdd.size());
             }
@@ -497,20 +508,8 @@ public class RacerCPAAlgorithm implements Algorithm, StatisticsProvider {
 
       } else {
 
-        // TODO: debug 判断当前状态是否被Location覆盖
-        RacerThreadingState suc = extractStateByType(successor, RacerThreadingState.class);
-        Iterable<CFANode> locs = suc.getLocationNodes();
-//        System.out.printf("visited locations num: %d\n", RacerUsageReachedSet.visitedLocations.size());
-        Iterator<CFANode> ite = locs.iterator();
-        suc.locationCovered = true;
-        while (ite.hasNext()) {
-          if (!RacerUsageReachedSet.visitedLocations.contains(ite.next())) {
-            suc.locationCovered = false;
-          }
-        }
-
         // TODO: debug
-        if (suc.locationCovered) { // 如果满足Location覆盖
+        if (isLocationCovered(successor)) { // 如果满足Location覆盖
           if (Plan_C_Algorithm.__DEBUG__) {
             System.out.println("\u001b[35msuccessor location covered\u001b[0m");
           }
@@ -553,12 +552,28 @@ public class RacerCPAAlgorithm implements Algorithm, StatisticsProvider {
     return false;
   }
 
+  // add visited locations
   public void addVisitedLocations(AbstractState pState) {
      /* 将新产生的后继的location放到RacerUsageReachedSet中的visitedLocations中 */
     AbstractStateWithLocations stateWithLocations = extractStateByType(pState, AbstractStateWithLocations.class);
     stateWithLocations.getLocationNodes().forEach(l -> RacerUsageReachedSet.visitedLocations.add(l));
   }
 
+  // check whether location covered
+  public boolean isLocationCovered(AbstractState pState) {
+
+    RacerThreadingState suc = extractStateByType(pState, RacerThreadingState.class);
+    Iterable<CFANode> locs = suc.getLocationNodes();
+//        System.out.printf("visited locations num: %d\n", RacerUsageReachedSet.visitedLocations.size());
+    Iterator<CFANode> ite = locs.iterator();
+    suc.locationCovered = true;
+    while (ite.hasNext()) {
+      if (!RacerUsageReachedSet.visitedLocations.contains(ite.next())) {
+        suc.locationCovered = false;
+      }
+    }
+    return suc.locationCovered;
+  }
   @Override
   public void collectStatistics(Collection<Statistics> pStatsCollection) {
     if (forcedCovering instanceof StatisticsProvider) {

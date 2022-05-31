@@ -44,6 +44,11 @@ public class RacerMergeOperator implements MergeOperator {
 
       RacerState result;
 
+      /* TODO merge just depend on BDD region */
+      if (mergedState.equals(wrappedState2)) {
+        stats.mergeTimer.stop();
+        return pState2;
+      }
       if (uState1.isLessOrEqual(uState2)) {
         result = uState2.copy(mergedState);
       } else if (uState2.isLessOrEqual(uState1)) {
@@ -52,14 +57,27 @@ public class RacerMergeOperator implements MergeOperator {
         result = uState1.copy(mergedState);
         result.join(uState2);
       }
+      stats.mergeTimer.stop();
+      return result;
+      /* */
 
-      if (mergedState.equals(wrappedState2) && result.equals(uState2)) {
-        stats.mergeTimer.stop();
-        return pState2;
-      } else {
-        stats.mergeTimer.stop();
-        return result;
-      }
+      // RacerState a <= b if all a's variableBindingRelation are in b.
+//      if (uState1.isLessOrEqual(uState2)) {
+//        result = uState2.copy(mergedState);
+//      } else if (uState2.isLessOrEqual(uState1)) {
+//        result = uState1.copy(mergedState);
+//      } else {
+//        result = uState1.copy(mergedState);
+//        result.join(uState2);
+//      }
+//
+//      if (mergedState.equals(wrappedState2) && result.equals(uState2)) {
+//        stats.mergeTimer.stop();
+//        return pState2;
+//      } else {
+//        stats.mergeTimer.stop();
+//        return result;
+//      }
     }
   }
 }
