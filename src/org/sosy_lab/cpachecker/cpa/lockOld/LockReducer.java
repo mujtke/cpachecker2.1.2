@@ -39,7 +39,7 @@ import org.sosy_lab.cpachecker.util.Pair;
 import org.sosy_lab.cpachecker.util.statistics.StatTimer;
 import org.sosy_lab.cpachecker.util.statistics.StatisticsWriter;
 
-@Options(prefix = "cpa.lock")
+@Options(prefix = "cpa.lockOld")
 public class LockReducer implements Reducer, StatisticsProvider {
 
   public class LockReducerStatistics implements Statistics {

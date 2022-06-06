@@ -32,7 +32,7 @@ import org.sosy_lab.cpachecker.cpa.lockOld.effects.GenericLockEffectWithId;
 import org.sosy_lab.cpachecker.cpa.lockOld.effects.SetLockEffect;
 import org.sosy_lab.cpachecker.util.Pair;
 
-@Options(prefix = "cpa.lock")
+@Options(prefix = "cpa.lockOld")
 public class ConfigurationParser {
   private Configuration config;
 

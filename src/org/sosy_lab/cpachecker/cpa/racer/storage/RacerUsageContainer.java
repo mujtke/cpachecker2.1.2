@@ -19,6 +19,7 @@ import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.logging.Level;
 import org.sosy_lab.common.log.LogManager;
+import org.sosy_lab.cpachecker.core.algorithm.Racer.Plan_C_Algorithm;
 import org.sosy_lab.cpachecker.core.interfaces.AbstractState;
 import org.sosy_lab.cpachecker.cpa.arg.ARGState;
 import org.sosy_lab.cpachecker.cpa.racer.RacerState;
@@ -192,6 +193,9 @@ public class RacerUsageContainer {
       } else {                                              //对当前id的计算没有发现不安全
         if (!oneTotalIteration) {
           sharedVariables.inc();
+          if (Plan_C_Algorithm.__DEBUG__) {
+            System.out.println("shared Variables found: " + sharedVariables.getValue() + ", unrefined Ids: " + unrefinedIds.size());
+          }
         }
         //iterator.remove();
       }
@@ -274,12 +278,13 @@ public class RacerUsageContainer {
         .put(unsafeDetectionTimer);
   }
 
-  // TODO 以下内容在Plan_C中未使用
   public int getTotalUnsafeSize() {
-    calculateUnsafesIfNecessary();
+    // when print statistics we have no need to calculate the unsafe because we have finished it before.
+//    calculateUnsafesIfNecessary();
     return unrefinedIds.size() + refinedIds.size();
   }
 
+  // TODO 以下内容在Plan_C中未使用
   public Iterator<SingleIdentifier> getUnsafeIterator() {
     calculateUnsafesIfNecessary();
     Set<SingleIdentifier> result = new TreeSet<>(refinedIds.keySet());
