@@ -59,9 +59,8 @@ public class RacerMergeOperator implements MergeOperator {
       }
       stats.mergeTimer.stop();
       return result;
-      /* */
 
-      // RacerState a <= b if all a's variableBindingRelation are in b.
+      // RacerState a <= b if all a's variableBindingRelation are in b
 //      if (uState1.isLessOrEqual(uState2)) {
 //        result = uState2.copy(mergedState);
 //      } else if (uState2.isLessOrEqual(uState1)) {

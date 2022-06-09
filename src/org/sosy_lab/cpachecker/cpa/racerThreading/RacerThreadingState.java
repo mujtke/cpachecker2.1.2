@@ -215,6 +215,7 @@ public class RacerThreadingState implements AbstractState, AbstractStateWithLoca
         return num;
     }
 
+    // 为当前线程加锁(LocalAccessLocks)
     public RacerThreadingState addLockAndCopy(String threadId, String lockId) {
         Preconditions.checkNotNull(lockId);
         Preconditions.checkNotNull(threadId);
@@ -577,7 +578,7 @@ public class RacerThreadingState implements AbstractState, AbstractStateWithLoca
 
     /** See {@link #activeThread}. */
     public RacerThreadingState withActiveThread(String pActiveThread) {
-//        return new org.sosy_lab.cpachecker.cpa.ThreadingForPlanC.RacerThreadingState(threads, locks, pActiveThread, threadIdsForWitness);
+//        return new RacerThreadingState(threads, locks, pActiveThread, threadIdsForWitness);
          //修改：
         RacerThreadingState result = new RacerThreadingState(threads, locks, pActiveThread, threadIdsForWitness);
         result.threadSet = threadSet;

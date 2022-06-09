@@ -48,7 +48,9 @@ import org.sosy_lab.cpachecker.core.interfaces.AbstractStateWithLocations;
 import org.sosy_lab.cpachecker.core.interfaces.Precision;
 import org.sosy_lab.cpachecker.core.interfaces.TransferRelation;
 import org.sosy_lab.cpachecker.cpa.composite.CompositeState;
+import org.sosy_lab.cpachecker.cpa.location.LocationState;
 import org.sosy_lab.cpachecker.cpa.racer.VariableSkipper;
+import org.sosy_lab.cpachecker.cpa.racerThreading.RacerThreadingState;
 import org.sosy_lab.cpachecker.exceptions.CPATransferException;
 import org.sosy_lab.cpachecker.exceptions.UnrecognizedCFAEdgeException;
 import org.sosy_lab.cpachecker.util.AbstractStates;
@@ -111,59 +113,137 @@ public class RacerTransferRelation extends AbstractSingleWrapperTransferRelation
     creator = c;
   }
 
-  @Override
-  public Collection<? extends AbstractState> getAbstractSuccessors(
-      // TODO not accomplished
-      AbstractState pElement, Precision pPrecision) throws CPATransferException, InterruptedException {
+//  @Override
+//  public Collection<? extends AbstractState> getAbstractSuccessors(
+//      // TODO not accomplished
+//      AbstractState pElement, Precision pPrecision) throws CPATransferException, InterruptedException {
+//
+//      Collection<AbstractState> results;
+//
+//      statistics.transferRelationTimer.start();
+//
+//      CompositeState compositeState = (CompositeState) ((RacerState)pElement).getWrappedState();
+//      AbstractStateWithLocations locStateBefore = extractStateByType(compositeState, AbstractStateWithLocations.class);
+//      assert locStateBefore != null : "get AbstractStateWithLocations error!";
+//      results = new ArrayList<>();
+//
+//      Collection<AbstractState> successors = ImmutableList.copyOf(transferRelation.getAbstractSuccessors(compositeState, pPrecision));
+//
+//      // 将compositeState转换为RacerState的过程
+//      Set<CFAEdge> edges = new HashSet<>();
+//      Set<CFANode> locsBefore = new HashSet<>();  // 传入状态中所包含的location集合
+//      for (CFANode node : locStateBefore.getLocationNodes()) { locsBefore.add(node); }
+//      for (AbstractState state : successors) {    // 对每个后继先计算边，再利用边将状态转换成usageState
+//        CompositeState successor = (CompositeState) state;
+//        AbstractStateWithLocations locStateAfter = extractStateByType(successor, AbstractStateWithLocations.class);
+//        Set<CFANode> locsAfter = new HashSet<>();   // 新获取的状态中所包含的location集合
+//        for (CFANode node : locStateAfter.getLocationNodes()) { locsAfter.add(node); }
+//        locsAfter.removeAll(locsBefore);
+//
+//        //TODO: wait to be fixed, the situation where more than one edge occur
+//        for (CFANode node : locsAfter) {    // 将产生的新后继的状态所对应的边都加到edges中（按道理，一个状态只对应一条边才对）
+//          int edgeNum = 0;
+//          for (int i = 0; i < node.getNumEnteringEdges(); i++) {
+//            CFAEdge tmpEdge = node.getEnteringEdge(i);
+//            if (locsBefore.contains(tmpEdge.getPredecessor())) {
+//              edges.add(tmpEdge);
+//              edgeNum++;
+//              // TODO: test if it behave differently when just an edge added -> it does when we limited edges num to 1
+//              break;
+//            }
+//          }
+////          assert edgeNum == 1 : "more than one edge is not allowed.";
+//        }
+//
+//        Set<AbstractState> racerStates = new HashSet<>();
+//        statistics.bindingTimer.start();
+//        for (CFAEdge edge : edges) {
+//
+//          statistics.checkForSkipTimer.start();
+//          CFAEdge currentEdge = changeIfNeccessary(edge); //如果pCfaEdge的调用了abort函数或者skipped函数，则返回空边或者summary边（相当于跳过函数分析）
+//          statistics.checkForSkipTimer.stop();
+//          if (currentEdge == null) { // 如果调用了abort函数，则后继状态为空集
+//            continue;
+//          }
+//
+//          creator.setCurrentFunction(getCurrentFunction((RacerState) pElement, currentEdge));
+//          RacerState oldState = (RacerState) pElement;    // oldState对应传入的旧状态
+//          Collection<AbstractState> successorsNew = new ArrayList<>();
+//          successorsNew.add(state);
+//
+//          racerStates.addAll(handleEdge(currentEdge, successorsNew, oldState));
+//        }
+//        statistics.bindingTimer.stop();
+//        for (AbstractState rState : racerStates) {
+//          results.add(rState);
+//        }
+//        edges.clear();
+//      }
+//
+//      statistics.transferRelationTimer.stop();
+//      return results;
+//    }
 
-      Collection<AbstractState> results;
+    @Override
+    public Collection<? extends AbstractState> getAbstractSuccessors(AbstractState pPredecessor, Precision pPrecision) throws CPATransferException, InterruptedException {
+
+      Collection<AbstractState> results = new ArrayList<>();
 
       statistics.transferRelationTimer.start();
 
-      CompositeState compositeState = (CompositeState) ((RacerState)pElement).getWrappedState();
-      AbstractStateWithLocations locStateBefore = extractStateByType(compositeState, AbstractStateWithLocations.class);
-      assert locStateBefore != null : "get AbstractStateWithLocations error!";
-      results = new ArrayList<>();
+      assert pPredecessor instanceof RacerState : "RacerState expected but not";
+      RacerState predecessor = (RacerState) pPredecessor;
+      CompositeState wrappedState = (CompositeState) predecessor.getWrappedState();
 
-      Collection<AbstractState> successors = ImmutableList.copyOf(transferRelation.getAbstractSuccessors(compositeState, pPrecision));
+      Collection<AbstractState> successors =
+          ImmutableList.copyOf(transferRelation.getAbstractSuccessors(wrappedState, pPrecision));
 
-      // 将compositeState转换为RacerState的过程
-      Set<CFAEdge> edges = new HashSet<>();
-      Set<CFANode> locsBefore = new HashSet<>();  // 传入状态中所包含的location集合
-      for (CFANode node : locStateBefore.getLocationNodes()) { locsBefore.add(node); }
-      for (AbstractState state : successors) {    // 对每个后继先计算边，再利用边将状态转换成usageState
-        CompositeState successor = (CompositeState) state;
-        AbstractStateWithLocations locStateAfter = extractStateByType(successor, AbstractStateWithLocations.class);
-        Set<CFANode> locsAfter = new HashSet<>();   // 新获取的状态中所包含的location集合
-        for (CFANode node : locStateAfter.getLocationNodes()) { locsAfter.add(node); }
-        locsAfter.removeAll(locsBefore);
-        for (CFANode node : locsAfter) {    // 将产生的新后继的状态所对应的边都加到edges中（按道理，一个状态只对应一条边才对）
-          for (int i = 0; i < node.getNumEnteringEdges(); i++) { edges.add(node.getEnteringEdge(i)); }
+      // successors are compositeStates, we need to change them to RacerStates
+      Set<CFAEdge> successorsPreEdges = new HashSet<>();
+      for (AbstractState successor : successors) {
+        // get predecessor's locs
+        RacerThreadingState threadingStateBefore =
+            extractStateByType(pPredecessor, RacerThreadingState.class);
+        Iterable<CFANode> beforeLocs = threadingStateBefore.getLocationNodes();
+
+        // get successor's locs according to its current thread
+        RacerThreadingState threadingState =
+            extractStateByType(successor, RacerThreadingState.class);
+        String currentThread = threadingState.getCurrentThread();
+        LocationState afterLocState = threadingState.getThreadLocation(currentThread);
+        CFANode currentLoc = afterLocState.getLocationNode();
+
+        int edgeNum = 0;
+        for (CFANode beforeNode : beforeLocs) {
+          if (beforeNode.hasEdgeTo(currentLoc)) {
+            CFAEdge edge = beforeNode.getEdgeTo(currentLoc);
+            edgeNum++;
+            successorsPreEdges.add(edge);
+          }
         }
+        // there should be just one edge got, else wrong
+        assert edgeNum == 1 : "expected edgeNum to be 1";
 
+        // now, change successors to racerStates
         Set<AbstractState> racerStates = new HashSet<>();
         statistics.bindingTimer.start();
-        for (CFAEdge edge : edges) {
-
+        for (CFAEdge edge : successorsPreEdges) {
           statistics.checkForSkipTimer.start();
-          CFAEdge currentEdge = changeIfNeccessary(edge); //如果pCfaEdge的调用了abort函数或者skipped函数，则返回空边或者summary边（相当于跳过函数分析）
+          CFAEdge currentEdge = changeIfNeccessary(edge);
           statistics.checkForSkipTimer.stop();
-          if (currentEdge == null) { // 如果调用了abort函数，则后继状态为空集
+          if (currentEdge == null) {
             continue;
           }
 
-          creator.setCurrentFunction(getCurrentFunction((RacerState) pElement, currentEdge));
-          RacerState oldState = (RacerState) pElement;    // oldState对应传入的旧状态
-          Collection<AbstractState> successorsNew = new ArrayList<>();
-          successorsNew.add(state);
+          creator.setCurrentFunction(getCurrentFunction(predecessor, currentEdge));
+          Collection<AbstractState> successorNew = new ArrayList<>();
+          successorNew.add(successor);
 
-          racerStates.addAll(handleEdge(currentEdge, successorsNew, oldState));
+          racerStates.addAll(handleEdge(currentEdge, successorNew, predecessor));
         }
         statistics.bindingTimer.stop();
-        for (AbstractState rState : racerStates) {
-          results.add(rState);
-        }
-        edges.clear();
+        racerStates.forEach(s -> { results.add(s); });
+        successorsPreEdges.clear();
       }
 
       statistics.transferRelationTimer.stop();

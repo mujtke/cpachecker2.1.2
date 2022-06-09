@@ -170,17 +170,12 @@ public final class RacerThreadingTransferRelation extends SingleEdgeTransferRela
         }
 
         // get all possible successors
+        // 这里根据Location(CPA)和callstack(CPA)来计算后继，尚未处理THREAD_FUNCTIONS相关的函数
         Collection<RacerThreadingState> results = getAbstractSuccessorsFromWrappedCPAs(
-                activeThread, threadingState, precision, cfaEdge);
+            activeThread, threadingState, precision, cfaEdge);
 
+        // 这里处理THREAD_FUNCTIONS相关的函数，对与已经计算的后继，修改其调用栈、位置等信息(如果需要修改的话)
         results = getAbstractSuccessorsForEdge0(cfaEdge, threadingState, activeThread, results);
-
-        // TODO:对所有的result而言，应该将前驱状态的threadSet先继承下来
-        //Collections2.transform(results, ts -> ts.withOldThreadSet(state));
-
-        // TODO:试图更新results的ThreadSet信息
-        /* TODO:结果不正确, 0506：尝试在Plan_C_UsageTransferRelation中进行threadSet的更新，这里只更新currentThread */
-        //results = Collections2.transform(results, ts -> ts.withThreadSet(activeThread, cfaEdge));
 
         // TODO: 将threads信息简化到threadSet中
         results = Collections2.transform(results, ts -> ts.copyThreads());
@@ -202,6 +197,7 @@ public final class RacerThreadingTransferRelation extends SingleEdgeTransferRela
     @Nullable
     private String getActiveThread(final CFAEdge cfaEdge, final RacerThreadingState threadingState) {
         final Set<String> activeThreads = new HashSet<>();
+        // threadingState中包含了当前已有的线程(@threads)以及每个线程所处的位置(getThreadLocation(id))
         for (String id : threadingState.getThreadIds()) {
             if (Iterables.contains(threadingState.getThreadLocation(id).getOutgoingEdges(), cfaEdge)) {   // 如果某个线程位置的出边与当前边相同
                 activeThreads.add(id);                  // 则返回该线程id
@@ -372,23 +368,10 @@ public final class RacerThreadingTransferRelation extends SingleEdgeTransferRela
         for (String id : tmp.getThreadIds()) {
             if (isLastNodeOfThread(tmp.getThreadLocation(id).getLocationNode())) {
                 tmp = removeThreadId(tmp, id);
-//                tmp = removeThreadStatusForExit(tmp, id);   // TODO：不确定
             }
         }
         return tmp;
     }
-
-    /** 对于已经到了最后一个节点的线程，需要将其从线程状态中移除
-     * @param tmp 传入的threadingState
-     * @param id 已经到达最后一个节点的线程的id
-     * @return 返回tmp， 如果tmp的线程集合中含有id的话，则将其去除
-     */
-//    private RacerThreadingState removeThreadStatusForExit(RacerThreadingState tmp, String id) {
-//        if (tmp.getThreadSet().containsKey(id)) {
-//            tmp.getThreadSet().remove(id);
-//        }
-//        return tmp;
-//    }
 
     /** remove the thread-id from the state, and cleanup remaining locks of this thread. */
     private RacerThreadingState removeThreadId(RacerThreadingState ts, final String id) {
@@ -442,14 +425,16 @@ public final class RacerThreadingTransferRelation extends SingleEdgeTransferRela
         } else {
             // a default reachability analysis can determine the thread-number on its own.
 
+            // 获取一个线程编号
+            // modified by yzc 22.05.23
             int newThreadNum = 0;
-            if (useIncClonedFunc) {
+            if (useIncClonedFunc) {     // 使用递增的线程编号，开启这个选项后，如果线程函数仅仅使用一次，则该函数不会被克隆多次，CFA重复使用？
                 newThreadNum = threadingState.getNewThreadNum(function.getName());
-            } else {
+            } else {                    // 获取一个没有使用过的线程编号，此情况下使用的是克隆的CFA. (每个线程都有一个num变量，用来区分使用的是克隆函数当中的哪一个)
                 newThreadNum = threadingState.getSmallestMissingThreadNum();
             }
 
-            //int newThreadNum = threadingState.getSmallestMissingThreadNum();    //获取一个没有使用过得线程编号
+            //int newThreadNum = threadingState.getSmallestMissingThreadNum(); // this is the original way to get a new thread num in threading.
             return createThreadWithNumber(threadingState, id, functionName, newThreadNum, results);
         }
     }
@@ -494,60 +479,24 @@ public final class RacerThreadingTransferRelation extends SingleEdgeTransferRela
                 Preconditions.checkNotNull(
                         cfa.getFunctionHead(functionName),
                         "Function '" + functionName + "' was not found. Please enable cloning for the CFA!");
+        // 开启新的线程需要开启新的函数调用栈
+        // 获取线程函数的callstack初始节点
         AbstractState initialStack =
                 callstackCPA.getInitialState(functioncallNode, StateSpacePartition.getDefaultPartition());
+        // 获取线程函数的Location初始节点
         AbstractState initialLoc =
                 locationCPA.getInitialState(functioncallNode, StateSpacePartition.getDefaultPartition());
 
         if (maxNumberOfThreads == -1 || threadingState.getThreadIds().size() < maxNumberOfThreads) {
             threadingState =
                     threadingState.addThreadAndCopy(threadId, newThreadNum, initialStack, initialLoc);
-            /**
-             * 参照ThreadState修改threadingState中的相关信息
-             */
-            //threadingState = handleThreadSet(threadingState, threadId);
-
-            return threadingState;
+            return threadingState; // 返回的threadingState中，调用栈和位置已经更新为线程开启后的状态
         } else {
             logger.logfOnce(
                     Level.WARNING, "number of threads is limited, cannot create thread %s", threadId);
             return null;
         }
     }
-    /** 更新线程集合 */
-    private RacerThreadingState handleThreadSet(RacerThreadingState threadingState, String threadId) {
-
-        return null;
-    }
-
-//    private RacerThreadingState createThread(RacerThreadingState threadingState, String threadId, RacerThreadingState.ThreadStatus threadStatus) {
-////        final String threadNameWithoutNum= threadId.replaceAll("\\d+", "");
-//        Map<String, RacerThreadingState.ThreadStatus> tSet = threadingState.getThreadSet();
-//
-//        // thread Status depends on parameter threadStatus and tSet
-//        RacerThreadingState.ThreadStatus status = threadStatus;
-//        if (tSet.containsKey(threadId)) {   // if the threadName has already existed once
-//            /* self_parallel_thread */
-//        }
-//
-//        if (!tSet.isEmpty()) {
-//            if (tSet.get(threadingState.getCurrentThread()) == RacerThreadingState.ThreadStatus.SELF_PARALLEL_THREAD) {
-//                status = RacerThreadingState.ThreadStatus.SELF_PARALLEL_THREAD;
-//            }
-//        }
-//
-//        Map<String, RacerThreadingState.ThreadStatus> newSet = new TreeMap<>(tSet);
-//        newSet.put(threadId, status);
-//
-//        // set current Thread
-//        String currentThread;
-//        if (threadStatus == RacerThreadingState.ThreadStatus.PARENT_THREAD) {
-//            currentThread = threadingState.getCurrentThread();
-//        } else {
-//            currentThread = threadId;
-//        }
-//        return threadingState.copyWith(currentThread, newSet);
-//    }
 
     /** returns the threadId if possible, else the next indexed threadId. */
     private String getNewThreadId(final RacerThreadingState threadingState, final String threadId) throws UnrecognizedCodeException {
@@ -625,24 +574,8 @@ public final class RacerThreadingTransferRelation extends SingleEdgeTransferRela
             return ImmutableSet.of();
         }
 
-        /**
-         * 这里对返回的结果进行修改，参照ThreadTransferRelation中的joinThread方式
-         * 不确定
-         */
-        //removeThreadStatusForJoin(results, extractParamName(statement, 0));
-
         return results;
     }
-
-//    private void removeThreadStatusForJoin(Collection<RacerThreadingState> results, String s) {
-//        Iterator<RacerThreadingState> it = results.iterator();
-//        while(it.hasNext()) {
-//            Map<String, RacerThreadingState.ThreadStatus> tMap = it.next().getThreadSet();
-//            if (tMap.containsKey(s)) {    // join之后，join的线程应该在所有状态的线程集合中抹去(TODO:不确定)
-//                tMap.remove(s);
-//            }
-//        }
-//    }
 
     /** extract the name of the n-th parameter from a function call. */
     static String extractParamName(AStatement statement, int n) throws UnrecognizedCodeException {
@@ -664,6 +597,7 @@ public final class RacerThreadingTransferRelation extends SingleEdgeTransferRela
                                                            String activeThread) {
 
         // check if local access lock exists and is set for current thread
+        // 如果threadingState中包含LocalAccessLocks但是当前线程没有持有该锁，则返回Null（此时对应在B线程中进行A线程持有的迁移，由于A线程持有局部访问锁，因此此时的迁移应该是被禁止的）
         if (threadingState.hasLock(LOCAL_ACCESS_LOCK) && !threadingState.hasLock(activeThread, LOCAL_ACCESS_LOCK)) {
             return null;
         }
@@ -673,6 +607,7 @@ public final class RacerThreadingTransferRelation extends SingleEdgeTransferRela
         if (isImporantForThreading) {
             return threadingState.removeLockAndCopy(activeThread, LOCAL_ACCESS_LOCK);
         } else {
+            // 为当前线程加锁：在threadingState中添加一个映射例如，"__CPAchecker_local_access_lock__ -> main"，则表明为main线程添加了一个局部访问锁
             return threadingState.addLockAndCopy(activeThread, LOCAL_ACCESS_LOCK);
         }
     }

@@ -164,6 +164,7 @@ public final class ThreadingTransferRelation extends SingleEdgeTransferRelation 
 
     ThreadingState state = (ThreadingState) pState;
 
+    // clean up exited threads.
     ThreadingState threadingState = exitThreads(state);
 
     final String activeThread = getActiveThread(cfaEdge, threadingState);
@@ -698,16 +699,17 @@ public final class ThreadingTransferRelation extends SingleEdgeTransferRelation 
     // check if local access lock exists and is set for current thread
     if (threadingState.hasLock(LOCAL_ACCESS_LOCK)
         && !threadingState.hasLock(activeThread, LOCAL_ACCESS_LOCK)) {
-      return null;
+      return null;  // 如果没有局部访问锁，或者是当前线程没有局部访问锁，则返回Null
     }
 
     // add local access lock, if necessary and possible
+    /* true if current cfa edge has global access or contains THREAD_FUNCTIONS */
     final boolean isImporantForThreading =
         globalAccessChecker.hasGlobalAccess(cfaEdge) || isImporantForThreading(cfaEdge);
     if (isImporantForThreading) {
       return threadingState.removeLockAndCopy(activeThread, LOCAL_ACCESS_LOCK);
     } else {
-      return threadingState.addLockAndCopy(activeThread, LOCAL_ACCESS_LOCK);
+      return threadingState.addLockAndCopy(activeThread, LOCAL_ACCESS_LOCK); // 只有不包含全局访问或者THREAD_FUNCTIONS时， 才添加局部访问锁
     }
   }
 

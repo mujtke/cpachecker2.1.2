@@ -126,6 +126,7 @@ public class Plan_C_Algorithm implements Algorithm, StatisticsProvider, ReachedS
 
         status = status.update(algorithm.run(reached));
 
+        System.out.println("\u001b[31miteration " + locationLoop++ + "\u001b[0m");
         if (_debug_) {
           System.out.println("\u001b[31miteration " + locationLoop++ + "\u001b[0m");
         }
@@ -159,12 +160,12 @@ public class Plan_C_Algorithm implements Algorithm, StatisticsProvider, ReachedS
         notifyReachedSetUpdateListeners(reached);
 
         if (haveUnsafe(reached)) {
-          // TODO 在reached中寻找race
+          // TODO 在newSuccessorsInEachIteration中寻找race
           ((RacerUsageReachedSet)reached).setHaveUnsafes(true);
           break;
         }
 
-//        // 将新产生的后继的location放到RacerUsageReachedSet中的visitedLocations中
+        // 将新产生的后继的location放到RacerUsageReachedSet中的visitedLocations中
 //        Set<AbstractState> newGottenLocs = ((RacerUsageReachedSet)reached).newSuccessorsInEachIteration.keySet();
 //        Iterator<AbstractState> it = newGottenLocs.iterator();
 //        while (it.hasNext()) {

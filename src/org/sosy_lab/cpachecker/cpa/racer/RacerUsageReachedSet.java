@@ -168,7 +168,6 @@ public class RacerUsageReachedSet extends RacerPartitionedReachedSet {
       }
     }
     coveredStatesTable.clear(); // 清空coveredStatesTable，用于下一次的计算
-    // TODO: 不确定
     visitedLocations.clear();
   }
 

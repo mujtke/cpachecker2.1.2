@@ -28,8 +28,8 @@ public class RacerThreadingStopOperator implements StopOperator {
     @Override
     public boolean stop(AbstractState state, Collection<AbstractState> reached, Precision precision) throws CPAException, InterruptedException {
 
-        // TODO: debug 0510
-        //if (true) return true;
+        // TODO: debug 0607
+//        if (true) return true;
         assert state instanceof RacerThreadingState;
 
         boolean stop = true;
