@@ -157,15 +157,20 @@ public class RacerUsageReachedSet extends RacerPartitionedReachedSet {
   }
 
   public void rollbackCoveredStates() {
-    // TODO
     for (Map.Entry<AbstractState, Precision> s : coveredStatesTable.entrySet()) {
       ARGState pState = (ARGState) s.getKey();
-      RacerThreadingState tState = extractStateByType(pState, RacerThreadingState.class);
-      if (tState.locationCovered) {    // 如果满足位置覆盖
-        putBackToWaitlist(pState);   // 在DefaultReachedSet中添加putBackToWaitlist方法
-        // for debug， 放回waitlist的状态，需要将其重新放入reached中(不使用add，而是使用addButSkipWaitlist方法跳过将状态放回waitlist中)
-        addButSkipWaitlist(s.getKey(), s.getValue());
+//      RacerThreadingState tState = extractStateByType(pState, RacerThreadingState.class);
+//      if (tState.locationCovered) {    // 如果满足位置覆盖
+//        putBackToWaitlist(pState);   // 在DefaultReachedSet中添加putBackToWaitlist方法
+//        // for debug， 放回waitlist的状态，需要将其重新放入reached中(不使用add，而是使用addButSkipWaitlist方法跳过将状态放回waitlist中)
+//        addButSkipWaitlist(s.getKey(), s.getValue());
+//      }
+      // TODO: don't know why the destroyed state exist in coveredStatesTable
+      if (pState.isDestroyed()) {
+        continue;
       }
+      putBackToWaitlist(pState);
+//      addButSkipWaitlist(s.getKey(), s.getValue());
     }
     coveredStatesTable.clear(); // 清空coveredStatesTable，用于下一次的计算
     visitedLocations.clear();

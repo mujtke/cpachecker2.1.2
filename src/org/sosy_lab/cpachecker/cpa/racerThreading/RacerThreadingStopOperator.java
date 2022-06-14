@@ -50,7 +50,10 @@ public class RacerThreadingStopOperator implements StopOperator {
         // TODO: cover比较的是当前状态和reached中的状态
         for (AbstractState other : reached) {
             RacerThreadingState o = (RacerThreadingState) other;
-            if (!pState.currentThread.equals(o.currentThread) || !pState.threadSet.equals(o.threadSet)) {
+//            if (!pState.currentThread.equals(o.currentThread) || !pState.threadSet.equals(o.threadSet)) {
+//                stop = false;
+//            }
+            if (!pState.threadSet.equals(o.threadSet)) {
                 stop = false;
             }
         }

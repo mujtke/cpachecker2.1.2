@@ -126,7 +126,7 @@ public class Plan_C_Algorithm implements Algorithm, StatisticsProvider, ReachedS
 
         status = status.update(algorithm.run(reached));
 
-        System.out.println("\u001b[31miteration " + locationLoop++ + "\u001b[0m");
+//        System.out.println("\u001b[31miteration " + locationLoop++ + "\u001b[0m");
         if (_debug_) {
           System.out.println("\u001b[31miteration " + locationLoop++ + "\u001b[0m");
         }

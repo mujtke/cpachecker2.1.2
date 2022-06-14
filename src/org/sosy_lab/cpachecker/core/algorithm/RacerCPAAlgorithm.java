@@ -23,6 +23,7 @@ import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.logging.Level;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.sosy_lab.common.ShutdownNotifier;
@@ -53,9 +54,6 @@ import org.sosy_lab.cpachecker.core.interfaces.TransferRelation;
 import org.sosy_lab.cpachecker.core.reachedset.ReachedSet;
 import org.sosy_lab.cpachecker.core.reachedset.UnmodifiableReachedSet;
 import org.sosy_lab.cpachecker.cpa.arg.ARGState;
-import org.sosy_lab.cpachecker.cpa.bdd.BDDState;
-import org.sosy_lab.cpachecker.cpa.composite.CompositeState;
-import org.sosy_lab.cpachecker.cpa.racer.RacerState;
 import org.sosy_lab.cpachecker.cpa.racerThreading.RacerThreadingState;
 import org.sosy_lab.cpachecker.cpa.arg.ARGMergeJoinCPAEnabledAnalysis;
 import org.sosy_lab.cpachecker.cpa.racer.RacerUsageReachedSet;
@@ -280,8 +278,47 @@ public class RacerCPAAlgorithm implements Algorithm, StatisticsProvider {
   private AlgorithmStatus run0(final ReachedSet reachedSet)
       throws CPAException, InterruptedException {
     // TODO: here in 1.9 version is "if" not "while"
-//    while (reachedSet.hasWaitingState()) {
-    if (reachedSet.hasWaitingState()) {
+    while (reachedSet.hasWaitingState()) {
+//    if (reachedSet.hasWaitingState()) {
+      // TODO: test whether there exist same location state in waitList
+//      AtomicBoolean hasSameLocationsState = new AtomicBoolean(false);
+//      for(AbstractState s : reachedSet.getWaitlist()) {
+//        RacerThreadingState sl = extractStateByType(s, RacerThreadingState.class);
+//        reachedSet.getWaitlist().forEach(t -> {
+//          if (!(((ARGState)s).getStateId() == ((ARGState)t).getStateId())) {
+//            RacerThreadingState tl = extractStateByType(t, RacerThreadingState.class);
+//            Set<CFANode> ss = new HashSet<>();
+//            Set<CFANode> ts = new HashSet<>();
+//            sl.getLocationNodes().forEach(n -> { ss.add(n); });
+//            tl.getLocationNodes().forEach(n -> { ts.add(n); });
+//            if (ss.equals(ts)) {
+//              hasSameLocationsState.set(true);
+//            }
+//          }
+//        });
+//
+//        if (hasSameLocationsState.get()) {
+////          System.out.println("there exist same locations state in waitList!");
+//          break;
+//        }
+//      }
+
+      // TODO: test whether there exist state which is covered by others in waitList
+//      boolean hasStateCovered = false;
+//      for (AbstractState s : reachedSet.getWaitlist()) {
+//        for (AbstractState t : reachedSet.getWaitlist()) {
+//          if (((ARGState)s).getStateId() == ((ARGState)t).getStateId()) {
+//            continue;
+//          } else {
+//            hasStateCovered = stopOperator.stop(t, List.of(s), reachedSet.getPrecision(t));
+//            if (hasStateCovered) {
+//              System.out.println("there exist state which is covered by others in waitList!");
+//            }
+//          }
+//        }
+//
+//      }
+
       shutdownNotifier.shutdownIfNecessary();
 
       stats.countIterations++;
@@ -352,18 +389,18 @@ public class RacerCPAAlgorithm implements Algorithm, StatisticsProvider {
       successors = transferRelation.getAbstractSuccessors(state, precision);
 
       // test whether there exist exception while get new successors
-      for (AbstractState t : successors) {
-        ARGState suc = (ARGState) t;
-        System.out.println("State[" + ((ARGState)state).getStateId() + "] " + ((ARGState)state).getEdgeToChild(suc) + " State[" + suc.getStateId() + "]");
-      }
+//      for (AbstractState t : successors) {
+//        ARGState suc = (ARGState) t;
+//        System.out.println("State[" + ((ARGState)state).getStateId() + "] " + ((ARGState)state).getEdgeToChild(suc) + " State[" + suc.getStateId() + "]");
+//      }
       // added for test if there exist same successors
-      Set<CompositeState> tmpSet = new HashSet<>();
-      successors.forEach(s -> { ARGState argState = (ARGState) s;
-      RacerState racerState = (RacerState) argState.getWrappedState();
-      tmpSet.add((CompositeState)racerState.getWrappedState()); });
-      if (tmpSet.size() < successors.size()) {
-        System.out.println("exist same successors!");
-      }
+//      Set<CompositeState> tmpSet = new HashSet<>();
+//      successors.forEach(s -> { ARGState argState = (ARGState) s;
+//      RacerState racerState = (RacerState) argState.getWrappedState();
+//      tmpSet.add((CompositeState)racerState.getWrappedState()); });
+//      if (tmpSet.size() < successors.size()) {
+//        System.out.println("exist same successors!");
+//      }
       if (Plan_C_Algorithm.__DEBUG__) {
         System.out.printf("before handle a successor and visited locations num: %d\n", RacerUsageReachedSet.visitedLocations.size());
         System.out.printf("\u001b[32mnewly get %d successors\u001b[0m && waitlist size %d\n", successors.size(), reachedSet.getWaitlist().size());
@@ -381,9 +418,6 @@ public class RacerCPAAlgorithm implements Algorithm, StatisticsProvider {
 
     for (Iterator<? extends AbstractState> it = successors.iterator(); it.hasNext(); ) {
       AbstractState successor = it.next();
-
-      // TODO debug: whenever we processor a successor, we add it's locations to visited List first
-//      addVisitedLocations(successor);
 
       shutdownNotifier.shutdownIfNecessary();
       logger.log(Level.FINER, "Considering successor of current state");
@@ -494,15 +528,15 @@ public class RacerCPAAlgorithm implements Algorithm, StatisticsProvider {
             // because ARGCPA doesn't like states in toRemove to be in the reachedSet.
             reachedSet.removeAll(toRemove);
             // TODO: should we regard merged states as location covered states?
-            reachedSet.addAll(toAdd);
+//            reachedSet.addAll(toAdd);
             // waitList
-//            toAdd.forEach(l -> {
-//              AbstractState s = l.getFirst();
-//              Precision p = l.getSecond();
-//              // mergeState's locations should be regards visited?
-//              ((RacerUsageReachedSet)reachedSet).coveredStatesTable.put(s, p);
-//              ((RacerUsageReachedSet)reachedSet).addButSkipWaitlist(s, p);
-//            });
+            toAdd.forEach(l -> {
+              AbstractState s = l.getFirst();
+              Precision p = l.getSecond();
+              // mergeState's locations should be regards visited?
+              ((RacerUsageReachedSet)reachedSet).coveredStatesTable.put(s, p);
+              ((RacerUsageReachedSet)reachedSet).addButSkipWaitlist(s, p);
+          });
             if (Plan_C_Algorithm.__DEBUG__) {
               System.out.printf("merge add %d\n", toAdd.size());
             }
@@ -515,6 +549,12 @@ public class RacerCPAAlgorithm implements Algorithm, StatisticsProvider {
         } finally {
           stats.mergeTimer.stop();
         }
+      }
+
+      // TODO: get reached again
+      Collection<AbstractState> reached2 = reachedSet.getReached(successor);
+      if (!(reached.containsAll(reached2) && reached2.containsAll(reached))) {
+        System.out.println("reached different after merge!");
       }
 
       stats.stopTimer.start();
@@ -546,10 +586,11 @@ public class RacerCPAAlgorithm implements Algorithm, StatisticsProvider {
            * 将该状态暂时放到被覆盖列表中
            */
           ((RacerUsageReachedSet)reachedSet).coveredStatesTable.put(successor, successorPrecision); //
-//          ((RacerUsageReachedSet)reachedSet).addButSkipWaitlist(successor, successorPrecision); // 该状态需要添加到reachedSet中，否则会报找不到精度的问题（将状态重新放回Waitlist中时，状态的精度是丢失的）
+          ((RacerUsageReachedSet)reachedSet).addButSkipWaitlist(successor, successorPrecision); // 该状态需要添加到reachedSet中，否则会报找不到精度的问题（将状态重新放回Waitlist中时，状态的精度是丢失的）
           // 这里需要重写add方法，不要将状态放回到waitlist中去
           // 如果是因为位置覆盖，则该后继状态应该放到newSuccessorsInEachIteration中去
           ((RacerUsageReachedSet) reachedSet).newSuccessorsInEachIteration.put(successor, successorPrecision);
+          addVisitedLocations(successor);
 
         } else {
           logger.log(Level.FINER, "No need to stop, adding successor to waitlist");
@@ -566,7 +607,7 @@ public class RacerCPAAlgorithm implements Algorithm, StatisticsProvider {
 //            AbstractStateWithLocations
 //                stateWithLocations = extractStateByType(successor, AbstractStateWithLocations.class);
 //            stateWithLocations.getLocationNodes().forEach(l -> RacerUsageReachedSet.visitedLocations.add(l));
-//          addVisitedLocations(successor);
+          addVisitedLocations(successor);
 
           if (Plan_C_Algorithm.__DEBUG__) {
             System.out.println("\u001b[33msuccessor added to reachSet\u001b[0m");
@@ -577,7 +618,6 @@ public class RacerCPAAlgorithm implements Algorithm, StatisticsProvider {
       if (Plan_C_Algorithm.__DEBUG__) {
         System.out.printf("handled one successor and visited locations num: %d\n", RacerUsageReachedSet.visitedLocations.size());
       }
-//      System.out.println("current state: " + ((ARGState)state).getStateId() + ", computed successors: " + stats.countSuccessors + ", reachedSet : " + reachedSet.size() + ", difference: " + (stats.countSuccessors - reachedSet.size()) + ", stop: " + stats.countStop + ", merged: " + stats.countMerge +", waitList: " + reachedSet.getWaitlist().size());
       System.out.println("current state: " + ((ARGState)state).getStateId() + ", computed successors: " + successors.size() +
           ", just: " + justNum + ", merged: " + mergedNum + ", stop: " + stopNum + ", locCovered: " + locCoveredNum + ", add: " + addNum);
     }
